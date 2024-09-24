@@ -1,0 +1,16 @@
+# Vivado folders
+.Xil/
+*.cache/
+*.hw/
+*.ip_user_files/
+*.runs/
+*.sim/
+
+# Vivado log files
+vivado.jou
+vivado.log
+*.str
+
+# Keep these
+!*.xpr
+!*.srcs/
