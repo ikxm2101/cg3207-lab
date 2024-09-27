@@ -76,7 +76,7 @@ module RV(
     //wire MemWrite ;
     wire MemtoReg ;
     wire [1:0] ALUSrcA ;
-    wire ALUSrcB ;
+    wire [1:0] ALUSrcB ;
     //wire [2:0] ImmSrc ;
     wire [3:0] ALUControl ;
     
