@@ -7,8 +7,8 @@
 *.sim/
 
 # Vivado log files
-vivado.jou
-vivado.log
+*.jou
+*.log
 *.str
 
 # Keep these
