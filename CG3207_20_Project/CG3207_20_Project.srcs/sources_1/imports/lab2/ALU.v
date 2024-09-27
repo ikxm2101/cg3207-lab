@@ -79,6 +79,16 @@ module ALU(
             4'b1100: ALUResult = Src_A | Src_B ; 	// or
             
             // include cases for shifts				// shifts
+
+            4'b0010: begin // SLL
+                ALUResult = ShOut;
+            end
+            4'b1010: begin // SRL
+                ALUResult = ShOut;
+            end
+            4'b1011: begin // SRA
+                ALUResult = ShOut;
+            end
             										
             default: ALUResult = 32'bx;
         endcase
@@ -92,8 +102,10 @@ module ALU(
     
     // todo: make shifter connections here
     // Sh signals can be derived directly from the appropriate ALUControl bits
-    
-    
+    assign Sh = {ALUControl[3], ALUControl[0]};
+    assign ShIn = Src_A;
+    assign Shamt5 = Src_B[4:0];
+
 	// Instantiate Shifter        
     Shifter Shifter1(
                     Sh,

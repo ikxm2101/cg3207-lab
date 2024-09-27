@@ -109,7 +109,23 @@ module RV(
     assign WE_PC = 1 ; // Will need to control it for multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
     // todo: other datapath connections here
 
+    assign Src_A = (ALUSrcA[0] == 1'b0) ? RD1 : 
+                    (ALUSrcA[1] == 1'b0) ? 1'b0 : PC;
+    assign Src_B = (ALUSrcB == 1'b1) ? ExtImm : RD2;
+
+    assign Result = (MemtoReg == 1'b0) ? ALUResult : ReadData;
+    assign PC_IN = PC + (PCSrc == 1'b0) ? 4 : ExtImm;
+	assign WriteData = RD2;
+	assign WE = RegWrite;
+	assign WD = Result;
 	
+	assign rs1 = Instr[19:15];
+	assign rs2 = Instr[24:20];
+	assign rd = Instr[11:7];
+	assign InstrImm = Instr[31:7];
+	assign Funct3 = Instr[14:12];
+	assign Funct7 = Instr[31:25];
+	assign Opcode = Instr[6:0];
     // Instantiate RegFile
     RegFile RegFile1( 
                     CLK,

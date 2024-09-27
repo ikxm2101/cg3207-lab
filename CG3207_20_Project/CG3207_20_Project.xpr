@@ -59,24 +59,8 @@
   <FileSets Version="1" Minor="31">
     <FileSet Name="sources_1" Type="DesignSrcs" RelSrcDir="$PSRCDIR/sources_1">
       <Filter Type="Srcs"/>
-      <File Path="$PSRCDIR/sources_1/new/PC_Logic.sv">
-        <FileInfo>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
-      <File Path="$PSRCDIR/sources_1/new/Decoder.sv">
-        <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
-          <Attr Name="UsedIn" Val="synthesis"/>
-          <Attr Name="UsedIn" Val="implementation"/>
-          <Attr Name="UsedIn" Val="simulation"/>
-        </FileInfo>
-      </File>
       <File Path="$PSRCDIR/sources_1/imports/lab2/ALU.v">
         <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PPRDIR/../lab-skeletons/lab2/ALU.v"/>
           <Attr Name="ImportTime" Val="1727362638"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -86,7 +70,6 @@
       </File>
       <File Path="$PSRCDIR/sources_1/imports/lab2/Extend.v">
         <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PPRDIR/../lab-skeletons/lab2/Extend.v"/>
           <Attr Name="ImportTime" Val="1727362638"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -96,7 +79,6 @@
       </File>
       <File Path="$PSRCDIR/sources_1/imports/lab2/ProgramCounter.v">
         <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PPRDIR/../lab-skeletons/lab2/ProgramCounter.v"/>
           <Attr Name="ImportTime" Val="1727362638"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -106,7 +88,6 @@
       </File>
       <File Path="$PSRCDIR/sources_1/imports/lab2/RegFile.v">
         <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PPRDIR/../lab-skeletons/lab2/RegFile.v"/>
           <Attr Name="ImportTime" Val="1727362638"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -116,7 +97,6 @@
       </File>
       <File Path="$PSRCDIR/sources_1/imports/lab2/Shifter.v">
         <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PPRDIR/../lab-skeletons/lab2/Shifter.v"/>
           <Attr Name="ImportTime" Val="1727362638"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -124,9 +104,22 @@
           <Attr Name="UsedIn" Val="simulation"/>
         </FileInfo>
       </File>
+      <File Path="$PSRCDIR/sources_1/new/Decoder.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
+      <File Path="$PSRCDIR/sources_1/new/PC_Logic.sv">
+        <FileInfo>
+          <Attr Name="UsedIn" Val="synthesis"/>
+          <Attr Name="UsedIn" Val="implementation"/>
+          <Attr Name="UsedIn" Val="simulation"/>
+        </FileInfo>
+      </File>
       <File Path="$PSRCDIR/sources_1/imports/lab2/RV.v">
         <FileInfo>
-          <Attr Name="AutoDisabled" Val="1"/>
           <Attr Name="ImportPath" Val="$PPRDIR/../lab-skeletons/lab2/RV.v"/>
           <Attr Name="ImportTime" Val="1727362638"/>
           <Attr Name="UsedIn" Val="synthesis"/>
@@ -184,7 +177,7 @@
       </File>
       <Config>
         <Option Name="DesignMode" Val="RTL"/>
-        <Option Name="TopModule" Val="PC_Logic"/>
+        <Option Name="TopModule" Val="RV"/>
       </Config>
     </FileSet>
     <FileSet Name="constrs_1" Type="Constrs" RelSrcDir="$PSRCDIR/constrs_1">
@@ -262,5 +255,65 @@
       <Report Name="ROUTE_DESIGN.REPORT_METHODOLOGY" Enabled="1"/>
     </Run>
   </Runs>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="Vivado 12-584"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="8"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="1"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+    <MsgAttr Name="StringsToMatch" Val="WARNING: [Vivado 12-584] No ports matched &apos;CLK_undiv&apos;. [C:/Users/marvi/Desktop/CG3207_Local/cg3207-lab/CG3207_20_Project/CG3207_20_Project.srcs/constrs_1/imports/lab2/TOP_Nexys4.xdc:8]"/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="Vivado 12-584"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="8"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="2"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+    <MsgAttr Name="StringsToMatch" Val="WARNING: [Vivado 12-584] No ports matched &apos;CLK_undiv&apos;. [C:/Users/marvi/Desktop/CG3207_Local/cg3207-lab/CG3207_20_Project/CG3207_20_Project.srcs/constrs_1/imports/lab2/TOP_Nexys4.xdc:9]"/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="Vivado 12-584"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="8"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="3"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+    <MsgAttr Name="StringsToMatch" Val="WARNING: [Vivado 12-584] No ports matched &apos;CLK_undiv&apos;. [C:/Users/marvi/Desktop/CG3207_Local/cg3207-lab/CG3207_20_Project/CG3207_20_Project.srcs/constrs_1/imports/lab2/TOP_Nexys4.xdc:10]"/>
+  </MsgRule>
+  <MsgRule>
+    <MsgAttr Name="RuleType" Val="0"/>
+    <MsgAttr Name="Limit" Val="-1"/>
+    <MsgAttr Name="NewSeverity" Val="ANY"/>
+    <MsgAttr Name="Id" Val="Vivado 12-508"/>
+    <MsgAttr Name="Severity" Val="ANY"/>
+    <MsgAttr Name="ShowRule" Val="1"/>
+    <MsgAttr Name="RuleSource" Val="8"/>
+    <MsgAttr Name="StringIsRegExp" Val="0"/>
+    <MsgAttr Name="RuleId" Val="4"/>
+    <MsgAttr Name="Note" Val=""/>
+    <MsgAttr Name="Author" Val=""/>
+    <MsgAttr Name="CreatedTimestamp" Val=""/>
+    <MsgAttr Name="StringsToMatch" Val="WARNING: [Vivado 12-508] No pins matched &apos;RX_MSF1_reg/C&apos;. [C:/Users/marvi/Desktop/CG3207_Local/cg3207-lab/CG3207_20_Project/CG3207_20_Project.srcs/constrs_1/imports/lab2/TOP_Nexys4.xdc:728]"/>
+  </MsgRule>
   <Board/>
 </Project>

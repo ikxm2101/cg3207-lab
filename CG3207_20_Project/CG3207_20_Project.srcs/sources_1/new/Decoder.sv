@@ -100,11 +100,10 @@ module Decoder(
             7'h63: ALUControl = 4'b0001;
             7'h33: ALUControl = {Funct3, Funct7[5]};
             7'h13: ALUControl = {Funct3, (Funct3 == 3'h5) ? Funct7[5] : 1'b0 };
-            default: ALUControl = 3'b0000;
+            default: ALUControl = 4'b0000;
         endcase
     end
 
 endmodule
-
 
 
