@@ -40,7 +40,7 @@ module Decoder(
     output logic MemWrite,		// Asserted only by store (sw)
     output logic MemtoReg,		// Asserted only by load (lw)
     output logic [1:0] ALUSrcA, 	// Needed for lui, auipic. Refer to the microarchitecture for its use. Uncomment wire and port map in RV.v as well
-    output logic [1:0] ALUSrcB,		// Asserted by all instructions which use an immediate (load, store, lui, auipc, DPImm). Needs to be expanded to a 2-bit signal to support link functionality for jal, jalr. Change wire width in RV.v as well
+    output logic ALUSrcB,		// Asserted by all instructions which use an immediate (load, store, lui, auipc, DPImm). Needs to be expanded to a 2-bit signal to support link functionality for jal, jalr. Change wire width in RV.v as well
     output logic [2:0] ImmSrc, 	// 000 for U, 010 for UJ, 011 for I, 110 for S, 111 for SB.
     output logic [3:0] ALUControl	// 0000 for add, 0001 for sub, 1110 for and, 1100 for or, 0010 for sll, 1010 for srl, 1011 for sra, 0001 for branch, 0000 for all others.
     					// Note that the most significant 3 bits are Funct3 for all DP instrns. LSB is the same as Funct[5] for DPReg type and DPImm_shifts. For other DPImms, Funct[5] is 0.
@@ -66,8 +66,7 @@ module Decoder(
     assign MemtoReg = (Opcode == 7'h03) ? 1'b1 : 1'b0; // Only for Load
     assign RegWrite = (Opcode == 7'h23 || Opcode == 7'h63 || Opcode == 7'h6F) ? 1'b0 : 1'b1;
     assign MemWrite = (Opcode == 7'h23) ? 1'b1 : 1'b0; // Only for Store
-    assign ALUSrcB[0] = (Opcode == 7'h33 || Opcode == 7'h63) ? 1'b0 : 1'b1;
-    assign ALUSrcB[1] = (Opcode == 7'h6F || Opcode == 7'h67) ? 1'b0 : 1'b1;
+    assign ALUSrcB = (Opcode == 7'h33 || Opcode == 7'h63) ? 1'b0 : 1'b1;
 
     always_comb begin : PCSBlock
         case (Opcode) 
