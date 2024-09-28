@@ -126,65 +126,66 @@ module RV(
 	assign Funct3 = Instr[14:12];
 	assign Funct7 = Instr[31:25];
 	assign Opcode = Instr[6:0];
-    // Instantiate RegFile
-    RegFile RegFile1( 
-                    CLK,
-                    WE,
-                    rs1,
-                    rs2,
-                    rd,
-                    WD,
-                    RD1,
-                    RD2     
-                );
+    /* Instantiate RegFile */
+    RegFile IRegFile_1 ( 
+        .CLK(CLK),
+        .WE(WE),
+        .rs1(rs1),
+        .rs2(rs2),
+        .rd(rd),
+        .WD(WD),
+        .RD1(RD1),
+        .RD2(RD2)
+    );
                 
-     // Instantiate Extend Module
-    Extend Extend1(
-                    ImmSrc,
-                    InstrImm,
-                    ExtImm
-                );
+     /* Instantiate Extend module */
+    Extend IExtend_1 (
+        .ImmSrc(ImmSrc),
+        .InstrImm(InstrImm),
+        .ExtImm(ExtImm)
+    );
                 
-    // Instantiate Decoder
-    Decoder Decoder1(
-                    Opcode,
-                    Funct3,
-                    Funct7,
-                    PCS,
-                    RegWrite,
-                    MemWrite,
-                    MemtoReg,
-                    ALUSrcA,
-                    ALUSrcB,
-                    ImmSrc,
-                    ALUControl
-                );
+    /* Instantiate Decoder */
+    Decoder IDecoder_1 (
+        .Opcode(Opcode),
+        .Funct3(Funct3),
+        .Funct7(Funct7),
+        .PCS(PCS),
+        .RegWrite(RegWrite),
+        .MemWrite(MemWrite),
+        .MemtoReg(MemtoReg),
+        .ALUSrcA(ALUSrcA),
+        .ALUSrcB(ALUSrcB),
+        .ImmSrc(ImmSrc),
+        .ALUControl(ALUControl)
+    );
                 
-    // Instantiate PC_Logic
-	PC_Logic PC_Logic1(
-                    PCS,
-                    Funct3,
-                    ALUFlags,
-                    PCSrc
-		);
+    /* Instantiate PC_Logic */
+	PC_Logic IPC_Logic_1 (
+        .PCS(PCS),
+        .Funct3(Funct3),
+        .ALUFlags(ALUFlags),
+        .PCSrc(PCSrc)
+	);
                 
-    // Instantiate ALU        
-    ALU ALU1(
-                    Src_A,
-                    Src_B,
-                    ALUControl,
-                    ALUResult,
-                    ALUFlags
-                );                
+    /* Instantiate ALU */        
+    ALU IALU_1 (
+        .Src_A(Src_A),
+        .Src_B(Src_B),
+        .ALUControl(ALUControl),
+        .ALUResult(ALUResult),
+        .ALUFlags(ALUFlags)
+    );                
     
-    // Instantiate ProgramCounter    
-    ProgramCounter ProgramCounter1(
-                    CLK,
-                    RESET,
-                    WE_PC,    
-                    PC_IN,
-                    PC  
-                );                             
+    /* Instantiate ProgramCounter */    
+    ProgramCounter IProgramCounter_1 (
+        .CLK(CLK),
+        .RESET(RESET),
+        .WE_PC(WE_PC),    
+        .PC_IN(PC_IN),
+        .PC(PC)  
+    );     
+
 endmodule
 
 

@@ -125,16 +125,16 @@ assign LED_PC = PC[15-N_LEDs_OUT+1 : 2]; // debug showing PC
 //----------------------------------------------------------------
 // RV port map
 //----------------------------------------------------------------
-RV RV1(
-	CLK,
-	RESET,
-	Instr,
-	ReadData,
-	MemRead,
-	MemWrite,
-	PC,
-	ALUResult,
-	WriteData
+RV IRV1(
+	.CLK(CLK),
+	.RESET(RESET),
+	.Instr(Instr),
+	.ReadData(ReadData),
+	.MemRead(MemRead),
+	.MemWrite(MemWrite),
+	.PC(PC),
+	.ALUResult(ALUResult),
+	.WriteData(WriteData)
 );
 
 //----------------------------------------------------------------
