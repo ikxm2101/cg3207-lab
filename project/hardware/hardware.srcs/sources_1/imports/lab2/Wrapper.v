@@ -52,18 +52,18 @@ module Wrapper
 											// Check if CONSOLE_OUT_ready (0x00000C14) is set before writing to this location (especially if your CLK_DIV_BITS is small).
 											// Consecutive STRs to this location not permitted (there should be at least 1 instruction gap between STRs to this location).
 	input	CONSOLE_OUT_ready,				// An indication to the wrapper/processor that it is ok to write to the CONSOLE_OUT (UART hardware).
-	                                        //  This bit should be set in the testbench to indicate that it is ok to write a new character to CONSOLE_OUT from your program.
-	                                        //  It can be read from the address 0x00000C14.
+	                                        // This bit should be set in the testbench to indicate that it is ok to write a new character to CONSOLE_OUT from your program.
+	                                        // It can be read from the address 0x00000C14.
 	output reg CONSOLE_OUT_valid,           // An indication to the UART hardware that the processor has written a new data byte to be transmitted.
 	input  [7:0] CONSOLE_IN,                // CONSOLE (UART) Input. Mapped to 0x00000C0C. The least significant 8 bits read from this location is the character received from PC via UART.
-	                                        // Check if CONSOLE_IN_valid flag (0x00000C10)is set before reading from this location.
+	                                        // Check if CONSOLE_IN_valid flag (0x00000C10) is set before reading from this location.
 											// Consecutive LDRs from this location not permitted (needs at least 1 instruction spacing between LDRs).
 											// Also, note that there is no Tx FIFO implemented. DO NOT send characters from PC at a rate faster than 
-											//  your processor (program) can read them. This means sending only 1 char every few seconds if your CLK_DIV_BITS is 26.
-											// 	This is not a problem if your processor runs at a high speed.
+											// your processor (program) can read them. This means sending only 1 char every few seconds if your CLK_DIV_BITS is 26.
+											// This is not a problem if your processor runs at a high speed.
 	input  	CONSOLE_IN_valid,               // An indication to the wrapper/processor that there is a new data byte waiting to be read from the UART hardware.
 	                                        // This bit should be set in the testbench to indicate a new character (Else, the processor will only read in 0x00).
-											//  It can be read from the address 0x00000C10.
+											// It can be read from the address 0x00000C10.
 	output reg CONSOLE_IN_ack,              // An indication to the UART hardware that the processor has read the newly received data byte.
 	                                        // The testbench should clear CONSOLE_IN_valid when this is set.
 	input  RESET,							// Active high. Implemented in TOP as not(CPU_RESET) or Internal_reset (CPU_RESET is red push button and is active low).
@@ -98,16 +98,14 @@ reg [31:0] DATA_VAR_MEM     [0:127]; // data (variable) memory
 // Instruction Memory
 //----------------------------------------------------------------
 initial begin
-
-		// todo: instruction memory goes here. e.g.:INSTR_MEM[0] = 32'hxxxxxxxx;
+	// TODO: instruction memory goes here. e.g.:INSTR_MEM[0] = 32'hxxxxxxxx;
 end
 
 //----------------------------------------------------------------
 // Data (Constant) Memory
 //----------------------------------------------------------------
 initial begin
-
-		// todo: instruction memory goes here. e.g.:DATA_CONST_MEM[0] = 32'hxxxxxxxx;
+	// TODO: instruction memory goes here. e.g.:DATA_CONST_MEM[0] = 32'hxxxxxxxx;
 end
 
 

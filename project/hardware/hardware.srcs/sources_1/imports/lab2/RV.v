@@ -51,8 +51,8 @@ module RV(
     output [31:0] WriteData
     );
     
-    // RegFile signals
-    //wire CLK ;
+    /* RegFile signals */
+    // wire CLK ;
     wire WE ;
     wire [4:0] rs1 ;
     wire [4:0] rs2 ;
@@ -62,51 +62,52 @@ module RV(
     wire [31:0] RD1 ;
     wire [31:0] RD2 ;
     
-    // Extend Module signals
+    /* Extend module signals */
     wire [2:0] ImmSrc ;
     wire [24:0] InstrImm ;
     wire [31:0] ExtImm ;
     
-    // Decoder signals
+    /* Decoder signals */
     wire [6:0] Opcode ;
     wire [2:0] Funct3 ;
     wire [6:0] Funct7 ;
     wire [1:0] PCS ;
     wire RegWrite ;
-    //wire MemWrite ;
+    // wire MemWrite ;
     wire MemtoReg ;
     wire [1:0] ALUSrcA ;
     wire ALUSrcB ;
-    //wire [2:0] ImmSrc ;
+    // wire [2:0] ImmSrc ;
     wire [3:0] ALUControl ;
     
-    // PC_Logic signals
-    //wire [1:0] PCS
-    //wire [2:0] Funct3;
-    //wire [2:0] ALUFlags;
+    /* PC_Logic signals */
+    // wire [1:0] PCS
+    // wire [2:0] Funct3;
+    // wire [2:0] ALUFlags;
     wire PCSrc;
       
-    // ALU signals
+    /* ALU signals */
     wire [31:0] Src_A ;
     wire [31:0] Src_B ;
-    //wire [3:0] ALUControl ;
-    //wire [31:0] ALUResult ;
+    // wire [3:0] ALUControl ;
+    // wire [31:0] ALUResult ;
     wire [2:0] ALUFlags ;
     
-    // ProgramCounter signals
-    //wire CLK ;
-    //wire RESET ;
+    /* ProgramCounter signals */
+    // wire CLK ;
+    // wire RESET ;
     wire WE_PC ;    
     wire [31:0] PC_IN ;
-    //wire [31:0] PC ; 
+    // wire [31:0] PC ; 
         
-    // Other internal signals here
+    /* Other internal signals */
     wire [31:0] PC_Offset ;
     wire [31:0] Result ;
     
-    
+
     assign MemRead = MemtoReg; // This is needed for the proper functionality of some devices such as UART CONSOLE
     assign WE_PC = 1 ; // Will need to control it for multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
+    
     // TODO: other datapath connections here
     /* Program counter input */
     assign PC_IN = PC + (PCSrc == 1'b0) ? 4 : ExtImm;
