@@ -89,22 +89,31 @@ module ALU (
       
     assign Z = (ALUResult == 0) ? 1 : 0 ;
     
-    assign ALUFlags = {Z, 1'b0, 1'b0} ; //{eq, lt, ltu} - all except eq are placeholders. 
-    					// todo: Will need to be modified in lab 3 to support blt, bltu, bge, bgeu.
+    assign ALUFlags = {Z, 1'b0, 1'b0} ; // {eq, lt, ltu} - all except eq are placeholders. 
+    					                // TODO : Will need to be modified in lab 3 to support blt, bltu, bge, bgeu.
     
     
-    // todo: make shifter connections here
-    // Sh signals can be derived directly from the appropriate ALUControl bits
-    assign Sh = {ALUControl[3], ALUControl[0]};
-    assign ShIn = Src_A;
-    assign Shamt5 = Src_B[4:0];
+    // TODO: make shifter connections here
+    /* Sh signals used by Shifter module can be derived directly from the appropriate ALUControl bits
+     * Shift operation | ALUControl[3:0] | Sh[1:0]
+     * SLL | 0010 | 00 
+     * SRL | 1010 | 10
+     * SRA | 1011 | 11
 
-	// Instantiate Shifter        
-    Shifter Shifter1(
-                    Sh,
-                    Shamt5,
-                    ShIn,
-                    ShOut
-                );
+     * Description:
+        * rd = rs1 (<< / >>) rs2
+        * rd = rs1 (<< / >>) rs2
+    */
+    assign Sh = {ALUControl[3], ALUControl[0]};
+    assign ShIn = Src_A; // rs1 -> RD1 -> Src_A
+    assign Shamt5 = Src_B[4:0];  // rs2 -> RD2 -> Src_B[4:0] (RV32I) 
+
+	/* Instantiate Shifter */        
+    Shifter IShifter_1 (
+        .Sh(Sh),
+        .Shamt5(Shamt5),
+        .ShIn(ShIn),
+        .ShOut(ShOut)
+    );
      
 endmodule
