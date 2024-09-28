@@ -5,6 +5,86 @@
 # Total number of instructions should not exceed 128 (127 excluding the last line 'halt B halt').
 
 main:
+    la s1, LEDS # Testing auipc and addi
+    li s2, 0x00002404 # to show lui
+    la s3, PBS
+    la s4, SEVENSEG
+
+loop:
+    # t0: value of DIPS
+    # t1: DIPS [7:0]
+    # t3: DIPS [15:8]
+    lw t0, (s2) # Read value of DIPS
+
+    andi t1, t0, 0xFF # DIPS [7:0]
+    li t2, 0x8 
+    srl t3, t0, t2 # shift right by 8 bits
+    andi t3, t3, 0xFF # DIPS [15:8]
+
+    and s6, t1, t3 # DIPS [7:0] and DIPS [15:8]
+    or s7, t1, t3 # DIPS [7:0] or DIPS [15:8]
+
+    add s8, t1, t3 # DIPS [7:0] + DIPS [15:8]
+    sub s9, t1, t3 # DIPS [7:0] - DIPS [15:8]
+
+    li, s10, 0x1 # flag for display
+
+display_fork:
+    lw s5, DELAY_VAL
+    lw t4, (s3) # read button values
+    andi t4, t4, 0x2 # Mask for BTN C
+    bne t4, zero, button_display # if BTN C is pressed go to shifting mode
+    beq s10, zero, display2 # go to display 2
+
+display1: # display when flag is 1
+    sw s6, (s1) # write to LED (result of AND)
+    sw s8, (s4) # write to 7 segment (result of ADD)
+    and s10, s10, zero # reset flag
+    j display_wait
+
+display2: # display when flag is 0
+    sw s7, (s1) # write to LED (result of OR)
+    sw s9, (s4) # write to 7 segment (result of SUB)
+    li, s10, 0x1 # set flag
+    j display_wait
+
+display_wait:
+    addi s5, s5, -1
+    bne s5, zero, display_wait
+    j display_fork
+
+button_display:
+    sw s9, (s4) # show DIPS [7:0] - DIPS [15:8] on 7 Seg
+    lw t4, (s3) # read button values
+    li, t6, 0x1 # set the value to shift by
+
+    andi t5, t4, 0x2 # Mask for BTN C
+    bne t5, zero, loop # if BTN C pressed go to start of loop
+
+    andi t5, t4, 0x4 # Mask for BTN L
+    bne t5, zero, left_shift # if BTN L pressed left shift
+ 
+    andi t5, t4, 0x1 # Mask for BTN R
+    bne t4, zero, right_shift # if BTN R is pressed
+    
+    j button_display
+
+right_shift:
+    sra s9, s9, t6
+    j seven_display
+
+left_shift:
+    sll s9, s9, t6
+    j seven_display
+
+seven_display:
+    sw s9, (s4) # show result of SUB on 7 Seg
+    li s10, 0xFFF # debounce wait time
+
+debounce_wait:
+    addi s10, s10, -1
+    bne s10, zero, debounce_wait
+    j button_display
 
 
 
