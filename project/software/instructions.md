@@ -41,3 +41,4 @@
 - If btnC is pressed:
   - Display result of "SUB" on 7 segment (allows for demo of SRA)
   - If btnL is pressed then SLL, if btnR is pressed then SRA
+  - If btnC is pressed it goes to start of loop
