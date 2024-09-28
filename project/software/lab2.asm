@@ -16,16 +16,16 @@ loop:
     # t3: DIPS [15:8]
     lw t0, (s2) # Read value of DIPS
 
-    andi t1, t0, 0xFF # DIPS[7:0]
+    andi t1, t0, 0xFF # DIPS [7:0]
     li t2, 0x8 
     srl t3, t0, t2 # shift right by 8 bits
     andi t3, t3, 0xFF # DIPS [15:8]
 
-    and s6, t1, t3 # value of AND on first and last 8 bit of DIPS
-    or s7, t1, t3 # value of OR on first and last 8 bit of DIPS
+    and s6, t1, t3 # DIPS [7:0] and DIPS [15:8]
+    or s7, t1, t3 # DIPS [7:0] or DIPS [15:8]
 
-    add s8, t1, t3 # value of adding first and last 8 bit of DIPS
-    sub s9, t1, t3 # value of substituting the last 8 bit of DIPs from first 8 bit of DIPS
+    add s8, t1, t3 # DIPS [7:0] + DIPS [15:8]
+    sub s9, t1, t3 # DIPS [7:0] - DIPS [15:8]
 
     li, s10, 0x1 # flag for display
 
@@ -33,10 +33,10 @@ display_fork:
     lw s5, DELAY_VAL
     lw t4, (s3) # read button values
     andi t4, t4, 0x2 # Mask for BTN C
-    bne t4, zero, button_display # if BTN C pressed go to different mode
+    bne t4, zero, button_display # if BTN C is pressed go to shifting mode
     beq s10, zero, display2 # go to display 2
 
-display1: #display when flag is 1
+display1: # display when flag is 1
     sw s6, (s1) # write to LED (result of AND)
     sw s8, (s4) # write to 7 segment (result of ADD)
     and s10, s10, zero # reset flag
@@ -54,9 +54,9 @@ display_wait:
     j display_fork
 
 button_display:
-    sw s9, (s4) # show result of SUB on 7 Seg
+    sw s9, (s4) # show DIPS [7:0] - DIPS [15:8] on 7 Seg
     lw t4, (s3) # read button values
-    li, t6, 0x1
+    li, t6, 0x1 # set the value to shift by
 
     andi t5, t4, 0x2 # Mask for BTN C
     bne t5, zero, loop # if BTN C pressed go to start of loop
@@ -66,6 +66,7 @@ button_display:
  
     andi t5, t4, 0x1 # Mask for BTN R
     bne t4, zero, right_shift # if BTN R is pressed
+    
     j button_display
 
 right_shift:
@@ -78,7 +79,7 @@ left_shift:
 
 seven_display:
     sw s9, (s4) # show result of SUB on 7 Seg
-    li s10, 0xFFF #debounce wait time
+    li s10, 0xFFF # debounce wait time
 
 debounce_wait:
     addi s10, s10, -1

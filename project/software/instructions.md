@@ -42,3 +42,20 @@
   - Display result of "SUB" on 7 segment (allows for demo of SRA)
   - If btnL is pressed then SLL, if btnR is pressed then SRA
   - If btnC is pressed it goes to start of loop
+
+### Variables
+| Name  | Description                |
+| ----- | -------------------------- |
+| `s1`  | LEDs Address               |
+| `s2`  | DIPs Address               |
+| `s3`  | PBS Address                |
+| `s4`  | Seven Segement Address     |
+| `s5`  | Delay Value for Display    |
+| `t0`  | Value of DIPs              |
+| `t1`  | DIPS [7:0]                 |
+| `t3`  | DIPS [15:8]                |
+| `s6`  | DIPS [7:0] and DIPS [15:8] |
+| `s7`  | DIPS [7:0] or DIPS [15:8]  |
+| `s8`  | DIPS [7:0] + DIPS [15:8]   |
+| `s9`  | DIPS [7:0] - DIPS [15:8]   |
+| `t10` | Flag for Display           |
