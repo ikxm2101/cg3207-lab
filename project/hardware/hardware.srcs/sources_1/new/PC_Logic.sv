@@ -32,10 +32,10 @@
 */
 
 module PC_Logic( // This is a combinational module, unlike ARM. See the note below.
-	input [1:0] PCS,	// 00 for non-control, 01 for conditional branch, 10 for jal, 11 for jalr
-	input [2:0] Funct3,	// condition specified in the instruction (eq / ne / lt / ge / ltu / geu)
+	input [1:0] PCS,	    // 00 for non-control, 01 for conditional branch, 10 for jal, 11 for jalr
+	input [2:0] Funct3,	    // condition specified in the instruction (eq / ne / lt / ge / ltu / geu)
 	input [2:0] ALUFlags, 	// {eq, lt, ltu}
-	output logic PCSrc	// will need to be expanded to 2 bits to support jalr
+	output logic PCSrc	    // will need to be expanded to 2 bits to support jalr
     );
     
     /* 
@@ -45,19 +45,37 @@ module PC_Logic( // This is a combinational module, unlike ARM. See the note bel
     */
     
     
-	// todo: conditional logic goes here
-	always_comb begin : blockName
+	// TODO: conditional logic goes here
+
+    /*
+     * Chapter 3B RISC-V Microarchitecture (Page 17)
+    */
+
+    /* PCS */
+    localparam NON_CONTROL = 2'b00;
+    localparam CONDITIONAL_BRANCH = 2'b01;
+    localparam JAL = 2'b10;
+
+    /* CONDITIONAL_BRANCH Funct3 */
+    localparam BEQ = 3'b000;
+    localparam BNE = 3'b001;
+    localparam BLT = 3'b100;
+    localparam BGE = 3'b101;
+    localparam BLTU = 3'b110;
+    localparam BGEU = 3'b111;
+
+	always_comb begin : PCSrcBlock
         case(PCS)
             2'b00: PCSrc = 1'b0;
             2'b10: PCSrc = 1'b1;
             2'b01: begin
                 case (Funct3)
-                    3'b000: PCSrc = ALUFlags[2];
-                    3'b001: PCSrc = ~ALUFlags[2];
-                    3'b100: PCSrc = ALUFlags[1];
-                    3'b101: PCSrc = ~ALUFlags[1];
-                    3'b110: PCSrc = ALUFlags[0];
-                    3'b111: PCSrc = ~ALUFlags[0];
+                    BEQ: PCSrc = ALUFlags[2];
+                    BNE: PCSrc = ~ALUFlags[2];
+                    BLT: PCSrc = ALUFlags[1];
+                    BGE: PCSrc = ~ALUFlags[1];
+                    BLTU: PCSrc = ALUFlags[0];
+                    BGEU: PCSrc = ~ALUFlags[0];
                     default: PCSrc = 1'bx;
                 endcase
             end
