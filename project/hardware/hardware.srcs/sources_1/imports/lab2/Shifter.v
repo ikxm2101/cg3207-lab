@@ -37,42 +37,47 @@ module Shifter(
     input [31:0] ShIn,
     output [31:0] ShOut
     );
-      
-    wire [31:0] ShTemp0 ;
-    wire [31:0] ShTemp1 ;
-    wire [31:0] ShTemp2 ;
-    wire [31:0] ShTemp3 ;
-    wire [31:0] ShTemp4 ;
+    
+    /* Intermediate results of shifting operations */
+    wire [31:0] ShTemp0;
+    wire [31:0] ShTemp1;
+    wire [31:0] ShTemp2;
+    wire [31:0] ShTemp3;
+    wire [31:0] ShTemp4;
                     
-    assign ShTemp0 = ShIn ;
+    assign ShTemp0 = ShIn;
+
+    /* Barrel shifter */
     shiftByNPowerOf2#(0) shiftBy0PowerOf2( Sh, Shamt5[0], ShTemp0, ShTemp1 ) ;
     shiftByNPowerOf2#(1) shiftBy1PowerOf2( Sh, Shamt5[1], ShTemp1, ShTemp2 ) ;
     shiftByNPowerOf2#(2) shiftBy2PowerOf2( Sh, Shamt5[2], ShTemp2, ShTemp3 ) ;
     shiftByNPowerOf2#(3) shiftBy3PowerOf2( Sh, Shamt5[3], ShTemp3, ShTemp4 ) ;
     shiftByNPowerOf2#(4) shiftBy4PowerOf2( Sh, Shamt5[4], ShTemp4, ShOut ) ;
-
-	
+    
 endmodule
 
 
-module shiftByNPowerOf2
-//module Shifter
-    #(parameter i = 0) // exponent
-    (   
+module shiftByNPowerOf2 #(
+    parameter exponent = 0
+    )(   
         input [1:0] Sh,
         input flagShift,
         input [31:0] ShTempIn,
         output reg [31:0] ShTempOut
-    ) ;
+    );
     
+    localparam SLL = 2'b00;
+    localparam SRL = 2'b10;
+    localparam SRA = 2'b11;
+
     always@(Sh, ShTempIn, flagShift) begin
         if(flagShift)
             case(Sh)
-                2'b00: ShTempOut = { ShTempIn[31-2**i:0], {2**i{1'b0}} } ;      	// SLL
-                2'b10: ShTempOut = { {2**i{1'b0}}, ShTempIn[31:2**i] } ;        	// SRL    
-                2'b11: ShTempOut = { {2**i{ShTempIn[31]}}, ShTempIn[31:2**i] } ;	// SRA
-                //2'b01: ShTempOut = { ShTempIn[2**i-1:0], ShTempIn[31:2**i] } ;  	// ROR is not supported by RISC-V
-                default: ShTempOut = ShTempIn; // invalid
+                SLL: ShTempOut = { ShTempIn[31-2**exponent:0], {2**exponent{1'b0}} } ;      	// SLL: shifts the rest towards MSB, shifts in zeros into LSBs
+                SRL: ShTempOut = { {2**exponent{1'b0}}, ShTempIn[31:2**exponent] } ;        	// SRL: shifts in zeros into MSBs, shifts the rest towards LSB
+                SRA: ShTempOut = { {2**exponent{ShTempIn[31]}}, ShTempIn[31:2**exponent] } ;	// SRA: preserves the signed bit as MSB, and shifts the rest towards LSB
+                // 2'b01: ShTempOut = { ShTempIn[2**exponent-1:0], ShTempIn[31:2**exponent] } ; // ROR is not supported by RISC-V
+                default: ShTempOut = ShTempIn; // invalids
             endcase   
         else
             ShTempOut = ShTempIn ;
