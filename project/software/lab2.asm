@@ -5,6 +5,36 @@
 # Total number of instructions should not exceed 128 (127 excluding the last line 'halt B halt').
 
 main:
+    la s1, LEDS # Testing auipc and addi
+    la s2, DIPS
+    la s3, PBS
+    la s4, SEVENSEG
+
+loops:
+    # t0: value of DIPS
+    # t1: DIPS [7:0]
+    # t3: DIPS [15:8]
+    lw t0, (s2) # Read value of DIPS
+
+    lw s5, DELAY_VAL
+
+    andi t1, t0, 0xFF # DIPS[7:0]
+    ori t2, zero, 0x8 
+    srl t3, t0, t2 # shift right by 8 bits
+    andi t3, t3, 0xFF # DIPS [15:8]
+
+    and s6, t1, t3 # value of AND on first and last 8 bit of DIPS
+    or s7, t1, t3 # value of OR on first and last 8 bit of DIPS
+
+    add s8, t1, t3 # value of adding first and last 8 bit of DIPS
+    sub s9, t1, t3 # value of substituting the last 8 bit of DIPs from first 8 bit of DIPS
+
+    sw s8, (s4)
+
+    sw s5, (s1) # write to LEDs
+
+wait:
+
 
 
 

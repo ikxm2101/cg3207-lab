@@ -25,3 +25,8 @@
 | `sll`        | `rd = rs1 << rs2`       | &#9744;     |
 | `srl`        | `rd = rs1 >> rs2`       | &#9744;     |
 | `sra`        | `rd = rs1 >> rs2`       | &#9744;     |
+
+### Programme Flow
+- Reads the Value of the DIPS Switches
+- If none of the DIPS are activated, all LEDS will blink on and off
+- Alternate Between showing the AND and OR value of the First and Last 8 Bits of the DIPS switches on the LEDs
