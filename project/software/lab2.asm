@@ -10,13 +10,11 @@ main:
     la s3, PBS
     la s4, SEVENSEG
 
-loops:
+loop:
     # t0: value of DIPS
     # t1: DIPS [7:0]
     # t3: DIPS [15:8]
     lw t0, (s2) # Read value of DIPS
-
-    lw s5, DELAY_VAL
 
     andi t1, t0, 0xFF # DIPS[7:0]
     ori t2, zero, 0x8 
@@ -29,13 +27,34 @@ loops:
     add s8, t1, t3 # value of adding first and last 8 bit of DIPS
     sub s9, t1, t3 # value of substituting the last 8 bit of DIPs from first 8 bit of DIPS
 
-    sw s8, (s4)
+    ori, s10, zero, 0x1 # flag for display
 
-    sw s5, (s1) # write to LEDs
+display_fork:
+    lw s5, DELAY_VAL
+    lw t4, (s3) # read button values
+    andi t4, t4, 0x1 # Mask for BTN C
+    bne t4, zero, button_display # if BTN C pressed go to different mode
+    beq s10, zero, display2 # go to display 2
+
+display1:
+    sw s6, (s1) # write to LED (result of AND)
+    sw s8, (s4) # write to 7 segment (result of ADD)
+    and s10, s10, zero
+    j wait
+
+display2:
+    sw s7, (s1) # write to LED (result of OR)
+    sw s9, (s4) # write to 7 segment (result of SUB)
+    ori s10, s10, 0x1
+    j wait
 
 wait:
+    addi s5, s5, -1
+    bne s5, zero, wait
+    j display_fork
 
-
+button_display:
+    sw t0, (s4) # show DIPS on 7 Seg
 
 
 # ------- <code memory (ROM mapped to Instruction Memory) ends>			
