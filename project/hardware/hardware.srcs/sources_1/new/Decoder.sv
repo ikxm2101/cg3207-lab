@@ -32,74 +32,89 @@
 */
 
 module Decoder(
-    input [6:0] Opcode ,
-    input [2:0] Funct3 ,
-    input [6:0] Funct7 ,
-    output logic [1:0] PCS,		// 00 for non-control, 01 for conditional branch, 10 for jal, 11 for jalr
-    output logic RegWrite,		// Asserted only by instructions which write to register file (load, auipc, lui, DPImm, DPReg);
-    output logic MemWrite,		// Asserted only by store (sw)
-    output logic MemtoReg,		// Asserted only by load (lw)
-    output logic [1:0] ALUSrcA, 	// Needed for lui, auipic. Refer to the microarchitecture for its use. Uncomment wire and port map in RV.v as well
-    output logic ALUSrcB,		// Asserted by all instructions which use an immediate (load, store, lui, auipc, DPImm). Needs to be expanded to a 2-bit signal to support link functionality for jal, jalr. Change wire width in RV.v as well
-    output logic [2:0] ImmSrc, 	// 000 for U, 010 for UJ, 011 for I, 110 for S, 111 for SB.
+    input [6:0] Opcode,
+    input [2:0] Funct3,
+    input [6:0] Funct7,
+    output logic [1:0] PCS,		    // 00 for non-control, 01 for conditional branch, 10 for jal, 11 for jalr
+    output logic RegWrite,		    // Asserted only by instructions which write to register file (load, auipc, lui, DPImm, DPReg);
+    output logic MemWrite,		    // Asserted only by store (sw)
+    output logic MemtoReg,		    // Asserted only by load (lw)
+    output logic [1:0] ALUSrcA,     // Needed for lui, auipic. Refer to the microarchitecture for its use. Uncomment wire and port map in RV.v as well
+    output logic ALUSrcB,		    // Asserted by all instructions which use an immediate (load, store, lui, auipc, DPImm). Needs to be expanded to a 2-bit signal to support link functionality for jal, jalr. Change wire width in RV.v as well
+    output logic [2:0] ImmSrc, 	    // 000 for U, 010 for UJ, 011 for I, 110 for S, 111 for SB.
     output logic [3:0] ALUControl	// 0000 for add, 0001 for sub, 1110 for and, 1100 for or, 0010 for sll, 1010 for srl, 1011 for sra, 0001 for branch, 0000 for all others.
-    					// Note that the most significant 3 bits are Funct3 for all DP instrns. LSB is the same as Funct[5] for DPReg type and DPImm_shifts. For other DPImms, Funct[5] is 0.
-    					// It is the same as sub for branches, and add for all others not mentioned in the line above.
+                                    // Note that the most significant 3 bits are Funct3 for all DP instrns. LSB is the same as Funct[5] for DPReg type and DPImm_shifts.
+                                    // For other DPImms, Funct[5] is 0.
+                                    // It is the same as sub for branches, and add for all others not mentioned in the line above.
     ); 
-// Change wire to reg if assigned inside a procedural (always) block. However, where it is easy enough, use assign instead of always.
-// A 2-1 multiplexing can be done easily using an assign with a ternary operator
-// For multiplexing with number of inputs > 2, a case construct within an always block is a natural fit. DO NOT to use nested ternary assignment operator as it hampers the readability of your code.
+    // Change wire to reg if assigned inside a procedural (always) block. However, where it is easy enough, use assign instead of always.
+    // A 2-1 multiplexing can be done easily using an assign with a ternary operator
+    // For multiplexing with number of inputs > 2, a case construct within an always block is a natural fit. DO NOT to use nested ternary assignment operator as it hampers the readability of your code.
     
-    	// todo: Implement Decoder here
-	
-	/* Opcode details
-        DP Reg	33 (0110011).
-        DP Imm	13 (0010011).
-        Load	03 (0000011).
-        Store	23 (0100011)
-        Branch	63 (1100011)
-        jal	    6F (1101111)
-        auipc	17 (0010111).
-        lui	    37 (0110111).
+    // TODO: Implement Decoder here
+
+    /*
+	 * Chapter 3B RISC-V Microarchitecture (Page 19)
     */
 
-    assign MemtoReg = (Opcode == 7'h03) ? 1'b1 : 1'b0; // Only for Load
-    assign RegWrite = (Opcode == 7'h23 || Opcode == 7'h63 || Opcode == 7'h6F) ? 1'b0 : 1'b1;
-    assign MemWrite = (Opcode == 7'h23) ? 1'b1 : 1'b0; // Only for Store
-    assign ALUSrcB = (Opcode == 7'h33 || Opcode == 7'h63) ? 1'b0 : 1'b1;
+	/* Opcode details
+        DP Reg	33 (0110011)
+        DP Imm	13 (0010011)
+        load	03 (0000011)
+        store	23 (0100011)
+        branch	63 (1100011)
+        jal	    6F (1101111)
+        auipc	17 (0010111)
+        lui	    37 (0110111)
+    */
+    
+    localparam DP_REG = 7'h33;
+    localparam DP_IMM = 7'h13;
+    localparam LOAD = 7'h03;
+    localparam STORE = 7'h23;
+    localparam BRANCH = 7'h63;
+    localparam JAL = 7'h6F;
+    localparam AUIPC = 7'h17;
+    localparam LUI = 7'h37;
+    
+    assign MemtoReg = (Opcode == 7'h03) ? 1'b1 : 1'b0; // Only for load
+    assign MemWrite = (Opcode == 7'h23) ? 1'b1 : 1'b0; // Only for store
+
+    assign RegWrite = (Opcode == 7'h23 || Opcode == 7'h63 || Opcode == 7'h6F) ? 1'b0 : 1'b1; // Only for DP Reg, DP Imm, load, auipc, lui
+    assign ALUSrcB = (Opcode == 7'h33 || Opcode == 7'h63) ? 1'b0 : 1'b1;  // Only for DP Imm, load, store, auipc, lui
 
     always_comb begin : PCSBlock
         case (Opcode) 
-            7'h63: PCS = 2'b01; // Branch Instruction
-            7'h6F: PCS = 2'b10; // jal Instruction
-            default: PCS = 2'b00; // Non control instruction
+            BRANCH: PCS = 2'b01; // branch instruction
+            JAL: PCS = 2'b10; // jal instruction
+            default: PCS = 2'b00; // non control instruction
         endcase
     end
 
     always_comb begin : ALUSrcABlock
         case (Opcode)
-            7'h17: ALUSrcA = 2'b11;
-            7'h37: ALUSrcA = 2'b01;
+            AUIPC: ALUSrcA = 2'b11;
+            LUI: ALUSrcA = 2'b01;
             default: ALUSrcA = 2'bx0;
         endcase
     end
     
     always_comb begin : ImmSrcBlock
         case (Opcode)
-            7'h13 || 7'h03: ImmSrc = 3'b011;
-            7'h17 || 7'h37: ImmSrc = 3'b000;
-            7'h23: ImmSrc = 3'b110;
-            7'h63: ImmSrc = 3'b111;
-            7'h6F: ImmSrc = 3'b010;
+            DP_IMM || LOAD: ImmSrc = 3'b011;
+            AUIPC || LUI: ImmSrc = 3'b000;
+            STORE: ImmSrc = 3'b110;
+            BRANCH: ImmSrc = 3'b111;
+            JAL: ImmSrc = 3'b010;
             default: ImmSrc = 3'bxxx;
         endcase
     end
 
     always_comb begin : ALUControlBlock
         case (Opcode)
-            7'h63: ALUControl = 4'b0001;
-            7'h33: ALUControl = {Funct3, Funct7[5]};
-            7'h13: ALUControl = {Funct3, (Funct3 == 3'h5) ? Funct7[5] : 1'b0 };
+            BRANCH: ALUControl = 4'b0001;
+            DP_REG: ALUControl = {Funct3, Funct7[5]};
+            DP_IMM: ALUControl = {Funct3, (Funct3 == 3'h5) ? Funct7[5] : 1'b0 };
             default: ALUControl = 4'b0000;
         endcase
     end
