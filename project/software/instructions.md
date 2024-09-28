@@ -27,6 +27,17 @@
 | `sra`        | `rd = rs1 >> rs2`       | &#9744;     |
 
 ### Programme Flow
-- Reads the Value of the DIPS Switches
-- If none of the DIPS are activated, all LEDS will blink on and off
-- Alternate Between showing the AND and OR value of the First and Last 8 Bits of the DIPS switches on the LEDs
+- Reads the value of DIPS switches
+- Calculate what would be the result of the first 8 bit of DIPS "AND" last 8 bit of DIPS
+- Calculate what would be the result of the first 8 bit of DIPS "OR" last 8 bit of DIPS
+- Calculate what would be the result of the first 8 bit of DIPS "SUB" last 8 bit of DIPS
+- Calculate what would be the result of the first 8 bit of DIPS "ADD" last 8 bit of DIPS
+- Check if btnC is pressed
+- If btnC is not pressed:
+   - Displays result of "AND" on LED and display result of "ADD" on 7 seg
+   - Delay
+   - Displays result of "OR" on LED and display result of "SUB" on 7 seg
+   - essentially alternating between 2 displays until center button is pressed
+- If btnC is pressed:
+  - Display result of "SUB" on 7 segment (allows for demo of SRA)
+  - If btnL is pressed then SLL, if btnR is pressed then SRA
