@@ -110,7 +110,7 @@ module RV(
     
     // TODO: other datapath connections here
     /* Program counter input */
-    assign PC_IN = PC + (PCSrc == 1'b0) ? 4 : ExtImm;
+    assign PC_IN = (PCSrc == 1'b0) ? (PC + 4) : (PC + ExtImm);
 
     /* ALU inputs */
     assign Src_A = (ALUSrcA[0] == 1'b0) ? RD1 : 
