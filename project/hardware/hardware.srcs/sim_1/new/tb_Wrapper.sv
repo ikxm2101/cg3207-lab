@@ -54,6 +54,15 @@ module tb_Wrapper #(
 		.CLK(CLK)
 	);
 	
+	/* 
+	 * Automatic tasks:
+	 *	1. New instances of local variables are created for each call.
+	 *	2. Local variables don't retain values between calls.
+	 * Non-automatic (static) tasks:
+	 *	1. Local variables retain their values between calls.
+	 *	2. There's only one instance of each local variable, shared across all calls.
+	 */
+
 	/* Tasks for button and DIP switches */
 	task automatic press_button(ref logic button, input int hold_cycles = 5);
 		@(posedge CLK);
