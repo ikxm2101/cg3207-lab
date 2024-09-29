@@ -77,11 +77,10 @@ module Decoder(
     localparam AUIPC = 7'h17;
     localparam LUI = 7'h37;
     
-    assign MemtoReg = (Opcode == 7'h03) ? 1'b1 : 1'b0; // Only for load
-    assign MemWrite = (Opcode == 7'h23) ? 1'b1 : 1'b0; // Only for store
+    assign MemtoReg = (Opcode == LOAD) ? 1'b1 : 1'b0; // Only for load
+    assign MemWrite = (Opcode == STORE) ? 1'b1 : 1'b0; // Only for store
 
-    assign RegWrite = (Opcode == 7'h23 || Opcode == 7'h63 || Opcode == 7'h6F) ? 1'b0 : 1'b1; // Only for DP Reg, DP Imm, load, auipc, lui
-    assign ALUSrcB = (Opcode == 7'h33 || Opcode == 7'h63) ? 1'b0 : 1'b1;  // Only for DP Imm, load, store, auipc, lui
+    assign RegWrite = (Opcode == STORE || Opcode == BRANCH || Opcode == JAL) ? 1'b0 : 1'b1; // Only for DP Reg, DP Imm, load, auipc, lui
 
     always_comb begin : PCSBlock
         case (Opcode) 
@@ -98,6 +97,8 @@ module Decoder(
             default: ALUSrcA = 2'bx0;
         endcase
     end
+
+    assign ALUSrcB = (Opcode == DP_REG || Opcode == BRANCH) ? 1'b0 : 1'b1;  // Only for DP Imm, load, store, auipc, lui
     
     always_comb begin : ImmSrcBlock
         case (Opcode)
