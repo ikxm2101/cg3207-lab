@@ -70,7 +70,7 @@ module tb_Wrapper #(
 		repeat(hold_cycles) @(posedge CLK); // hold the button for number_cycles
 		button = 1'b0;
   	endtask
-
+	
 	task automatic reset_button(ref logic button);
 		@(posedge CLK);
 		button = 1'b0;
@@ -91,9 +91,6 @@ module tb_Wrapper #(
 		PB = 3'b000;
 		DIP = 16'h0000;
 
-		/* Reset the processor */
-		RESET = 1; repeat(2) @(posedge CLK); RESET = 0; 
-		
 		// TODO: Insert rest of the stimuli here
 		/*
 		 * User inputs:
@@ -112,6 +109,8 @@ module tb_Wrapper #(
 
 		/* Test Case 1: DIP = 16'h1234 */
 		set_dip_switches(16'h1234);
+		/* Reset the processor */
+		RESET = 1; repeat(2) @(posedge CLK); RESET = 0; 
 
 		/*
 		 * btnC = 0 -> Cycles between:
