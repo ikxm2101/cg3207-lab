@@ -15,13 +15,16 @@
 module tb_Wrapper #(
 	parameter N_LEDs_OUT	= 8,					
 	parameter N_DIPs		= 16,
-	parameter N_PBs		= 3 
+	parameter N_PBs			= 3 
 	)(
 	);
 	
-	// Signals for the Device Under Test (DUT)
-	reg  [N_DIPs-1:0] DIP = 0;		
-	reg  [N_PBs-1:0] PB = 0;			
+	/* Instantiation of Wrapper as the DUT */
+	// Signals for the Device Under Test (DUT) 
+	reg  [N_DIPs-1:0] DIP = 0;
+	/* User pushbuttons -> PB[2:0] btnL, btnC, btnR */ 
+	logic btnL = 0, btnC = 0, btnR = 0;
+	reg  [N_PBs-1:0] PB = {btnL, btnC, btnR};			
 	wire [N_LEDs_OUT-1:0] LED_OUT;
 	wire [6:0] LED_PC;			
 	wire [31:0] SEVENSEGHEX;	
@@ -34,7 +37,7 @@ module tb_Wrapper #(
 	reg  RESET = 0;					
 	reg  CLK = 0;				
 	
-	// Instantiate DUT
+	// Module instantiation of wrapper
 	Wrapper dut (
 		.DIP(DIP), 
 		.PB(PB), 
@@ -51,44 +54,36 @@ module tb_Wrapper #(
 		.CLK(CLK)
 	);
 	
-	// GENERATE CLOCK       
-    always #5 CLK = ~CLK ; // invert clk every 5 time units
+	/* Tasks for button and DIP switches */
+	task automatic press_button(ref logic button, input int hold_cycles = 5);
+		@(posedge CLK);
+		button = 1'b1;
+		repeat(hold_cycles) @(posedge CLK); // hold the button for number_cycles
+		button = 1'b0;
+  	endtask
 
-	logic btnR = PB[0];
-	logic btnC = PB[1];
-	logic btnL = PB[2];
+	task reset_button(input button);
+		@(posedge CLK);
+		button = 1'b0;
+	endtask
+
+	task set_dip_switches(input [15:0] dip_value);
+		@(posedge CLK);
+		DIP = dip_value;
+  	endtask
+
+	/* Clock generation */      
+    always #5 CLK = ~CLK ; // invert clk every 5 time units (ns)
 
 	// STIMULI
     initial begin
-		RESET = 1; #10; RESET = 0; // hold reset state for 10 ns.
+		/* Initialise signals */
+		CLK = 0;
+		PB = 3'b000;
+		DIP = 16'h0000;
 
-		// CONSOLE_OUT_ready = 1'h1; // ok to keep it high continously in the testbench. In reality, it will be high only if UART is ready to send a data to PC
-
-		// /* Sequence of signals for UART input
-		//  * 1. Write an input to CONSOLE_IN
-		//  * 2. Set CONSOLE_IN_valid to 1
-		//  * 3. Wait for CONSOLE_IN_ack to be 1
-		//  * 4. Set CONSOLE_IN_valid to 0
-		// */
-        // CONSOLE_IN = 8'h50; // 'P'. Will be read and ignored by the processor
-        // CONSOLE_IN_valid = 1'h1;
-        // wait(CONSOLE_IN_ack);
-        // wait(~CONSOLE_IN_ack);
-        // CONSOLE_IN_valid = 1'h0;
-        // #105;
-
-        // CONSOLE_IN = 8'h41;// 'A'
-        // CONSOLE_IN_valid = 1'h1;
-        // wait(CONSOLE_IN_ack);
-        // wait(~CONSOLE_IN_ack);
-		// CONSOLE_IN_valid = 1'h0;
-        // #105;
-
-        // CONSOLE_IN = 8'h0D; // '\r'
-        // CONSOLE_IN_valid = 1'h1;
-        // wait(CONSOLE_IN_ack); // should print "Welcome to CG3207" following this.
-        // wait(~CONSOLE_IN_ack);
-        // CONSOLE_IN_valid = 1'h0;
+		/* Reset the processor */
+		RESET = 1; repeat(2) @(posedge CLK); RESET = 0; 
 		
 		// TODO: Insert rest of the stimuli here
 		/*
@@ -98,41 +93,58 @@ module tb_Wrapper #(
 			* 		btnL -> used to showcase 'sll' instruction
 			* 		btnR -> used to showcase 'sra' instruction
 		 * User outputs: 
-		 	* LED_OUT: 		8-bit output to display the results:
-								* 1. 'and'
-								* 2. 'or' 
+		 	* LED_OUT: LED[15:8] -> 8-bit output to display the results:
+										* 1. 'and'
+										* 2. 'or' 
 			* SEVENSEGHEX: 	display the results:
 								* 1. 'add'
 								* 2. 'sub'
 		*/
-		/* Test Case 1 */
-		DIP = 16'b1100_1100_1010_1010; #10;
-		btnC = 0; #10;
-		$display("AND Operation: LED_OUT = %b", LED_OUT);
-		assert(LED_OUT == 8'b1000_1000) else $error("AND Operation failed");
 
-		$display("ADD Operation: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b1000_0000) else $error("ADD Operation failed");
+		/* Test Case 1: DIP = 16'h1234 */
+		set_dip_switches(16'h1234);
 
-		$display("OR Operation: LED_OUT = %b", LED_OUT);
-		assert(LED_OUT == 8'b1110_1110) else $error("OR Operation failed");
+		/*
+		 * btnC = 0 -> Cycles between:
+		 *			-> and instruction on LED_OUT / add instruction on SEVENSEGHEX
+		 * 			-> OR instruction on LED_OUT / sub instruction on SEVENSEGHEX
+		*/
+		reset_button(.button(btnC));
+		$display("and instruction: LED_OUT = %b", LED_OUT);
+		assert(LED_OUT == 8'b0001_0000) else $error("and instruction failed");
 
-		$display("SUB Operation: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b1101_1110) else $error("SUB Operation failed");
-
-		#50;
-
-		btnC = 1; #10; btnC = 0;
-		$display("SUB Operation: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b1101_1110) else $error("SUB Operation failed");
+		$display("ADD instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
+		assert(SEVENSEGHEX == 8'b1000_0000) else $error("add instruction failed");
 		
-		btnL = 1; #10; btnL = 0;
-		$display("SLL Operation: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b0101_0100) else $error("SLL Operation failed");
+		repeat(20) @(posedge CLK);
+		
+		reset_button(.button(btnC));
+		$display("or instruction: LED_OUT = %b", LED_OUT);
+		assert(LED_OUT == 8'b0011_0110) else $error("or instruction failed");
 
-		btnR = 1; #10; btnR = 0;
-		$display("SRA Operation: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b1101_0101) else $error("SRA Operation failed");
+		$display("sub instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
+		assert(SEVENSEGHEX == 8'b1101_1110) else $error("sub instruction failed");
+
+		repeat(10) @(posedge CLK);
+
+		/*
+		 * btnC = 1 -> Changes SEVENSEGHEX display to showcase sub instruction:
+		 *			-> sll done on sub instruction output
+		 * 			-> sra done on sub instruction output
+		*/
+		press_button(.button(btnC), .hold_cycles(10));
+		$display("sub instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
+		assert(SEVENSEGHEX == 8'b1101_1110) else $error("sub instruction failed");
+		
+		repeat(5) @(posedge CLK);
+
+		press_button(.button(btnL), .hold_cycles(2));
+		$display("sll instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
+		assert(SEVENSEGHEX == 8'b0101_0100) else $error("sll instruction failed");
+
+		press_button(.button(btnR), .hold_cycles(2));
+		$display("sra instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
+		assert(SEVENSEGHEX == 8'b0010_1010) else $error("sra instruction failed");
 
 		$finish;
     end
