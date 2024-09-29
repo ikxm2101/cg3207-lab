@@ -114,8 +114,8 @@ module Decoder(
     always_comb begin : ALUControlBlock
         case (Opcode)
             BRANCH: ALUControl = 4'b0001;
-            DP_REG: ALUControl = {Funct3, Funct7[5]};
-            DP_IMM: ALUControl = {Funct3, (Funct3 == 3'h5) ? Funct7[5] : 1'b0 };
+            DP_REG: ALUControl = { Funct3, Funct7[5] };
+            DP_IMM: ALUControl = { Funct3, (Funct3 == 3'h5) ? Funct7[5] : 1'b0 };
             default: ALUControl = 4'b0000;
         endcase
     end
