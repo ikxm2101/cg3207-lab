@@ -99,11 +99,11 @@ module Decoder(
     end
 
     assign ALUSrcB = (Opcode == DP_REG || Opcode == BRANCH) ? 1'b0 : 1'b1;  // Only for DP Imm, load, store, auipc, lui
-    
+
     always_comb begin : ImmSrcBlock
         case (Opcode)
-            DP_IMM || LOAD: ImmSrc = 3'b011;
-            AUIPC || LUI: ImmSrc = 3'b000;
+            DP_IMM, LOAD: ImmSrc = 3'b011;
+            AUIPC, LUI: ImmSrc = 3'b000;
             STORE: ImmSrc = 3'b110;
             BRANCH: ImmSrc = 3'b111;
             JAL: ImmSrc = 3'b010;
