@@ -71,7 +71,7 @@ module tb_Wrapper #(
 		button = 1'b0;
   	endtask
 
-	task reset_button(input button);
+	task automatic reset_button(ref logic button);
 		@(posedge CLK);
 		button = 1'b0;
 	endtask
