@@ -46,10 +46,10 @@ module ALU (
 	wire [31:0] ShOut;
 	
     /* Other signals */
-    reg [32:0] Src_A_comp;
-    reg [32:0] Src_B_comp;
-    reg [32:0] C_0;
-    wire [32:0] S_wider;
+    reg [31:0] Src_A_comp;
+    reg [31:0] Src_B_comp;
+    reg [31:0] C_0;
+    wire [31:0] S_wider;
     wire N, Z, C, V; 	// optional intermediate values to derive eq, lt, ltu
 			            // Hint: We need to care about V only for subtraction
 	
