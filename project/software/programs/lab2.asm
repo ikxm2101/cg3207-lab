@@ -57,14 +57,13 @@ display_wait:           # Delay loop
     j display_fork
 
 shift_display:
-    sw s9, (s4) # show DIPS [7:0] - DIPS [15:8] on 7 Seg
+    sw s9, (s4) # show DIPS [15:8] - DIPS [7:0] on 7 Seg
     sw zero, (s1) # clear LEDs
 
     lw s11, DEBOUNCE_VAL       # debounce wait time
     j debounce_wait     # debounce centre button
 
     lw t4, (s3) # read button values
-    li, t6, 0x1 # set the value to shift by
 
     # Check for Button Press
     lw t4, (s3)         # Read button values
