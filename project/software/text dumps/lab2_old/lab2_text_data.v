@@ -1,0 +1,69 @@
+module memory_initialization;
+integer i;
+
+// Instruction Memory Initialization
+	INSTR_MEM[0] = 32'h00002497;
+	INSTR_MEM[1] = 32'h40048493;
+	INSTR_MEM[2] = 32'h00002937;
+	INSTR_MEM[3] = 32'h40490913;
+	INSTR_MEM[4] = 32'h00002997;
+	INSTR_MEM[5] = 32'h3f898993;
+	INSTR_MEM[6] = 32'h00002a17;
+	INSTR_MEM[7] = 32'h400a0a13;
+	INSTR_MEM[8] = 32'h00092283;
+	INSTR_MEM[9] = 32'h0ff2f313;
+	INSTR_MEM[10] = 32'h00800393;
+	INSTR_MEM[11] = 32'h0072de33;
+	INSTR_MEM[12] = 32'h0ffe7e13;
+	INSTR_MEM[13] = 32'h01c37b33;
+	INSTR_MEM[14] = 32'h01c36bb3;
+	INSTR_MEM[15] = 32'h01c30c33;
+	INSTR_MEM[16] = 32'h41c30cb3;
+	INSTR_MEM[17] = 32'h00100d13;
+	INSTR_MEM[18] = 32'h00002a97;
+	INSTR_MEM[19] = 32'hfb8aaa83;
+	INSTR_MEM[20] = 32'h0009ae83;
+	INSTR_MEM[21] = 32'h002efe93;
+	INSTR_MEM[22] = 32'h020e9a63;
+	INSTR_MEM[23] = 32'h000d0a63;
+	INSTR_MEM[24] = 32'h0164a023;
+	INSTR_MEM[25] = 32'h018a2023;
+	INSTR_MEM[26] = 32'h000d7d33;
+	INSTR_MEM[27] = 32'h0140006f;
+	INSTR_MEM[28] = 32'h0174a023;
+	INSTR_MEM[29] = 32'h019a2023;
+	INSTR_MEM[30] = 32'h00100d13;
+	INSTR_MEM[31] = 32'h0040006f;
+	INSTR_MEM[32] = 32'hfffa8a93;
+	INSTR_MEM[33] = 32'hfe0a9ee3;
+	INSTR_MEM[34] = 32'hfc1ff06f;
+	INSTR_MEM[35] = 32'h019a2023;
+	INSTR_MEM[36] = 32'h0009ae83;
+	INSTR_MEM[37] = 32'h00100f93;
+	INSTR_MEM[38] = 32'h002eff13;
+	INSTR_MEM[39] = 32'hf80f12e3;
+	INSTR_MEM[40] = 32'h004eff13;
+	INSTR_MEM[41] = 32'h000f1c63;
+	INSTR_MEM[42] = 32'h001eff13;
+	INSTR_MEM[43] = 32'h000e9463;
+	INSTR_MEM[44] = 32'hfddff06f;
+	INSTR_MEM[45] = 32'h41fcdcb3;
+	INSTR_MEM[46] = 32'h00c0006f;
+	INSTR_MEM[47] = 32'h01fc9cb3;
+	INSTR_MEM[48] = 32'h0040006f;
+	INSTR_MEM[49] = 32'h019a2023;
+	INSTR_MEM[50] = 32'h00001d37;
+	INSTR_MEM[51] = 32'hfffd0d13;
+	INSTR_MEM[52] = 32'hfffd0d13;
+	INSTR_MEM[53] = 32'hfe0d1ee3;
+	INSTR_MEM[54] = 32'hfb5ff06f;
+	for (i = 55; i < 128; i = i + 1) begin
+		INSTR_MEM[i] = 32'h0;
+	end
+
+// Data Constant Memory Initialization
+	DATA_CONST_MEM[0] = 32'h00000004;
+	for (i = 1; i < 128; i = i + 1) begin
+		DATA_CONST_MEM[i] = 32'h0;
+	end
+endmodule
