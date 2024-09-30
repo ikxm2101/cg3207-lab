@@ -46,20 +46,29 @@
   - If btnC is pressed it goes back to LOOP
 
 ### Variables
-| Name  | Description                |
-| ----- | -------------------------- |
-| `s1`  | LEDs Address               |
-| `s2`  | DIPs Address               |
-| `s3`  | PBS Address                |
-| `s4`  | Seven Segement Address     |
-| `s5`  | Delay Value for Display    |
-| `t0`  | Value of DIPs              |
-| `t1`  | DIPS [7:0]                 |
-| `t3`  | DIPS [15:8]                |
-| `t6`  | Shift Constant             |
-| `s6`  | DIPS [15:8] and DIPS [7:0] |
-| `s7`  | DIPS [15:8] or DIPS [7:0]  |
-| `s8`  | DIPS [15:8] + DIPS [7:0]   |
-| `s9`  | DIPS [15:8] - DIPS [7:0]   |
-| `s10` | Flag for Display           |
-| `s11` | Debounce Delay Amount      |
+| Name  | Description                       |
+| ----- | --------------------------------- |
+| `s1`  | LEDs Address                      |
+| `s2`  | DIPs Address                      |
+| `s3`  | PBS Address                       |
+| `s4`  | Seven Segement Address            |
+| `s5`  | Delay Value for Display           |
+| `s6`  | DIPS [15:8] and DIPS [7:0]        |
+| `s7`  | DIPS [15:8] or DIPS [7:0]         |
+| `s8`  | DIPS [15:8] + DIPS [7:0]          |
+| `s9`  | DIPS [15:8] - DIPS [7:0]          |
+| `s10` | Flag for Display                  |
+| `s11` | Debounce Delay Amount             |
+| `t0`  | Value of DIPs                     |
+| `t1`  | DIPS [7:0]                        |
+| `t2`  | Shift Constant (8)                |
+| `t3`  | DIPS [15:8]                       |
+| `t4`  | PBS Value                         |
+| `t5`  | UNUSED                            |
+| `t6`  | Shift Constant (1)                |
+| `a2`  | Left Button Flag                  |
+| `a3`  | Center Button Flag                |
+| `a4`  | Right Button Flag                 |
+| `a5`  | Mode Flag                         |
+| `a6`  | Previous DIPS [15:8] - DIPS [7:0] |
+| `a7`  | Previous Shifted Value            |
