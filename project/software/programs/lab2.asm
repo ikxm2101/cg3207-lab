@@ -10,8 +10,8 @@ main:
     la s3, PBS              
     la s4, SEVENSEG
     li t6, 0x1              # Shift constant
-    li a5, 0x1              # Flag for mode
-    li s10, 0x1
+    li a5, 0x0              # Flag for Mode
+    li s10, 0x0		     # Flag for Display
     li a6, 0x0              # Previous sub value (unshifted)
     li a7, 0x0              # Shifted sub value
 
@@ -85,8 +85,8 @@ display_f0:             # Display when flag is 0
 
 shift_mode:
     beq a6, s9, shift_display   # check if previous sub value == current sub value
-    lw a6, s9                   # Store sub to a6 (previous sub value)
-    lw a7, s9                   # Store sub to a7 (changed shifted value)
+    add a6, zero, s9            # Store sub to a6 (previous sub value)
+    add a7, zero, s9            # Store sub to a7 (changed shifted value)
 
 shift_display:
     sw zero, (s1)               # Clear LEDs
@@ -102,6 +102,7 @@ right_shift:
 left_shift:
     sll a7, a7, t6
     j detect_button
+    
 # ------- <code memory (ROM mapped to Instruction Memory) ends>			
 				
 								
