@@ -114,8 +114,8 @@ right_shift:
 # Total number of constants should not exceed 128
 # If a variable is accessed multiple times, it is better to store the address in a register and use it rather than load it repeatedly.
 DROM:
-DELAY_VAL: .word 4
-DEBOUNCE_VAL: .word 0xFFF
+DELAY_VAL: .word 0x2422
+DEBOUNCE_VAL: .word 0xFFFF
 
 #------- <constant memory (ROM mapped to Data Memory) ends>	
 

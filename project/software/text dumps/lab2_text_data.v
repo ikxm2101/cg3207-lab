@@ -73,8 +73,8 @@ integer i;
 	end
 
 // Data Constant Memory Initialization
-	DATA_CONST_MEM[0] = 32'h00000004;
-	DATA_CONST_MEM[1] = 32'h00000fff;
+	DATA_CONST_MEM[0] = 32'h00002422;
+	DATA_CONST_MEM[1] = 32'h0000ffff;
 	for (i = 2; i < 128; i = i + 1) begin
 		DATA_CONST_MEM[i] = 32'h0;
 	end
