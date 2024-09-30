@@ -7,13 +7,13 @@
 main:
     la s1, LEDS             # Testing auipc and addi
     li s2, 0x00002404       # to show lui
-    la s3, PBS              
-    la s4, SEVENSEG
+    la s3, PBS              # Button Address
+    la s4, SEVENSEG         # Seven Segment Address
     li s5, 0x0              # Delay Counter
     li s10, 0x0		        # Flag for Display
-    li t2, 0x8              # Shift Constant
-    li t6, 0x1              # Shift constant
-    li a5, 0x0              # Flag for Mode
+    li t2, 0x8              # Shift Constant (for DIPS shifting)
+    li t6, 0x1              # Shift constant (for SRA/SLL on Shift mode)
+    li a5, 0x0              # Flag for Mode (Between normal and shifted)
     li a6, 0x0              # Previous sub value (unshifted)
     li a7, 0x0              # Shifted sub value
 
@@ -48,7 +48,7 @@ mode_select:
 
     # Check for center button press
     bne a3, zero, toggle_mode   # If btnC is pressed, go to toggle_mode
-    j continue                  # Else go to //todo:
+    j continue                  # Else go to continue
     
 toggle_mode: 
     beq a5, zero, toggle_flag
@@ -96,13 +96,14 @@ shift_display:
     bne a4, zero, right_shift   # Right button pressed
     j detect_button
 
+left_shift:
+    sll a7, a7, t6
+    j detect_button
+    
 right_shift:
     sra a7, a7, t6
     j detect_button
 
-left_shift:
-    sll a7, a7, t6
-    j detect_button
     
 # ------- <code memory (ROM mapped to Instruction Memory) ends>			
 				
