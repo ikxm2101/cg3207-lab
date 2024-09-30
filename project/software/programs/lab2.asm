@@ -9,19 +9,21 @@ main:
     li s2, 0x00002404       # to show lui
     la s3, PBS              
     la s4, SEVENSEG
+    li s5, 0x0              # Delay Counter
+    li s10, 0x0		        # Flag for Display
+    li t2, 0x8              # Shift Constant
     li t6, 0x1              # Shift constant
     li a5, 0x0              # Flag for Mode
-    li s10, 0x0		     # Flag for Display
     li a6, 0x0              # Previous sub value (unshifted)
     li a7, 0x0              # Shifted sub value
 
 detect_button:
-    lw t4, (s3)             # Get button values
-    andi a2, t4, 0x4        # Left button flag
-    andi a3, t4, 0x2        # Center button flag
-    andi a4, t4, 0x1        # Right button flag
+    lw t4, (s3)                 # Get button values
+    andi a2, t4, 0x4            # Left button flag
+    andi a3, t4, 0x2            # Center button flag
+    andi a4, t4, 0x1            # Right button flag
     beq t4, zero, mode_select   # if button not pressed, goto mode_select.
-    lw s11, DEBOUNCE_VAL       # debounce wait time
+    lw s11, DEBOUNCE_VAL        # debounce wait time
 
 debounce:
     addi s11, s11, -1       # decrement
@@ -35,7 +37,6 @@ mode_select:
     andi t1, t0, 0xFF       # DIPS[7:0]
 
     # Load 8 most signficant value of DIPS to t3
-    li t2, 0x8              # Load immediate, will be decomposed to addi since imm is small
     srl t3, t0, t2          # Shift right by 8 bits
     andi t3, t3, 0xFF       # DIPS[15:8]
 
@@ -47,7 +48,7 @@ mode_select:
 
     # Check for center button press
     bne a3, zero, toggle_mode   # If btnC is pressed, go to toggle_mode
-    j continue              # Else go to //todo:
+    j continue                  # Else go to //todo:
     
 toggle_mode: 
     beq a5, zero, toggle_flag
@@ -64,8 +65,8 @@ continue:
 normal_mode:
     # check if s5 is zero
     beq s5, zero, change_display    # if delay expired, change display
-    addi s5, s5, -1             # else decrement
-    j detect_button             # and jump to detect_button
+    addi s5, s5, -1                 # else decrement
+    j detect_button                 # and jump to detect_button
 
 change_display:
     lw s5, DELAY_VAL
