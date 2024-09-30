@@ -1,4 +1,4 @@
-## RISC-V Instructions to be Implemented
+## RISC-V Instructions Implemented
 
 ### Essential Instructions
 
@@ -30,24 +30,35 @@
 
 ![Programme Flow](flow.png "Programme Flow")
 
-- TODO: Update below
-- Reads the value of DIPS switches
-- Calculate what would be the result of the first 8 bit of DIPS "AND" last 8 bit of DIPS
-- Calculate what would be the result of the first 8 bit of DIPS "OR" last 8 bit of DIPS
-- Calculate what would be the result of the first 8 bit of DIPS "SUB" last 8 bit of DIPS
-- Calculate what would be the result of the first 8 bit of DIPS "ADD" last 8 bit of DIPS
-- LOOP: 
-  - Check if btnC is pressed
-  - If btnC is not pressed:
-    - Displays result of "AND" on LED and display result of "ADD" on 7 seg
-    - Delay
-    - Displays result of "OR" on LED and display result of "SUB" on 7 seg
-    - essentially alternating between 2 displays until center button is pressed
-  - If btnC is pressed, it goes to SHIFT_LOOP
-- SHIFT_LOOP:
-  - Display result of "SUB" on 7 segment (allows for demo of SRA)
-  - If btnL is pressed then SLL, if btnR is pressed then SRA. Both 1 shift.
-  - If btnC is pressed it goes back to LOOP
+### Programme Description
+- There are 2 modes in the programme <b>shifting mode</b> and <b>normal mode</b>
+- The DIPs Switches are used as numerical inputs for the programme, split into DIPS[15:8] and DIPS[7:0]
+- The programmes checks for button presses
+- BtnC:
+  - Toggles between <b>shifting mode</b> and <b>normal mode</b>
+- BtnL:
+  - Only used during <b>shifting mode</b>
+  - Conducts `sll` on  `DIPS[15:8] - DIPS[7:0]`
+- BtnR:
+  - Only used during <b>shifting mode</b>
+  - Conducts `sra` on  `DIPS[15:8] - DIPS[7:0]`
+  
+- <b>Normal Mode</b>
+  - It alternates between 2 display views
+  - Display View 1:
+    - LED shows `DIPS[15:8] and DIPS[7:0]`
+    - 7-Segment shows `DIPS[15:8] + DIPS[7:0]`
+  - Display View 2:
+    - LED shows `DIPS[15:8] or DIPS[7:0]`
+    - 7-Segment shows `DIPS[15:8] - DIPS[7:0]`
+
+- <b>Shifting Mode</b>
+  - LEDs are turned off
+  - 7-Segment shows `DIPS[15:8] - DIPS[7:0]`
+  - BtnL and BtnR controls the shifting of `DIPS[15:8] - DIPS[7:0]`
+  - Checks if previous value of the DIPs switches has been altered 
+  - If the value of the DIPS did not change, the shifted value shown on the 7-Segment display will remain
+  - If the value of the DIPS changed, the shifted value shown on the 7-Segment display will reset to `DIPS[15:8] - DIPS[7:0]`  
 
 ### Variables
 | Name  | Description                       |
