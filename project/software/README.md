@@ -27,6 +27,10 @@
 | `sra`        | `rd = rs1 >> rs2`       | &#9745;     |
 
 ### Programme Flow
+
+![Programme Flow](flow.png "Programme Flow")
+
+- TODO: Update below
 - Reads the value of DIPS switches
 - Calculate what would be the result of the first 8 bit of DIPS "AND" last 8 bit of DIPS
 - Calculate what would be the result of the first 8 bit of DIPS "OR" last 8 bit of DIPS
