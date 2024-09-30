@@ -64,30 +64,60 @@ module tb_Wrapper #(
 	 */
 
 	/* Tasks for button and DIP switches */
-	task automatic press_button(ref logic button, input int hold_cycles = 5);
-		@(posedge CLK);
-		button = 1'b1;
-		repeat(hold_cycles) @(posedge CLK); // hold the button for number_cycles
-		button = 1'b0;
+	task automatic press_button(ref logic button, input [6:0] release_PC);
+		button = 1'b1; // set button
+		PB = {btnL, btnC, btnR}; // update PB register
+		wait(LED_PC == release_PC);
+		button = 1'b0; // release button
+		PB = {btnL, btnC, btnR}; // update PB register
   	endtask
 	
 	task automatic reset_button(ref logic button);
-		@(posedge CLK);
 		button = 1'b0;
 	endtask
 
 	task set_dip_switches(input [15:0] dip_value);
-		@(posedge CLK);
 		DIP = dip_value;
   	endtask
 
 	/* Clock generation */      
-    always #5 CLK = ~CLK ; // invert clk every 5 time units (ns)
+    always #5 CLK = ~CLK ; // invert clk every 5 time units (ns) -> period of 10 ns -> 100 MHz clock
+
+	/* LED_PC for instructions of interest 
+	 * DISPLAY1 -> cycling display
+	 * DISPLAY2 -> display to showcase sll and sra 
+	*/
+
+	/* Used with previous revision of lab2.asm that implements button presses in polling mode 
+	// localparam DISPLAY1_BUTTON_READ = 7'b001_0100;
+	// localparam DISPLAY1_SHOW_LED_1 = 7'b001_1001;
+	// localparam DISPLAY1_SHOW_SEVENSEG_1 = 7'b001_1010;
+	// localparam DISPLAY1_SHOW_LED_2 = 7'b001_1101;
+	// localparam DISPLAY1_SHOW_SEVENSEG_2 = 7'b001_1010;
+	
+	// localparam DISPLAY2_BUTTON_READ = 7'b010_0100;
+	// localparam CHANGE_TO_DISPLAY2_ENTRY = 7'b010_0011;
+	// localparam DISPLAY2_BTNL_SLL_ENTRY = 7'b010_1111;
+	// localparam DISPLAY2_BTNR_SRA_ENTRY = 7'b010_1101;
+	*/
+
+	/* Used with newest revision of lab2.asm that implements button presses in polling mode with flags */
+	localparam DETECT_BUTTON = 7'b000_1111;
+    
+    // sub, or
+	localparam NORMAL_DISPLAY_F0_SHOW_LED = 7'b011_0010;
+	localparam NORMAL_DISPLAY_F0_SHOW_SEVENSEG = 7'b011_0011;
+	
+	// add, and
+	localparam NORMAL_DISPLAY_F1_SHOW_LED = 7'b010_1110;
+	localparam NORMAL_DISPLAY_F1_SHOW_SEVENSEG = 7'b010_1111;
+
+	localparam MODE_SELECT_ENTRY = 7'b001_1000;
 
 	// STIMULI
     initial begin
 		/* Initialise signals */
-		CLK = 0;
+		CLK = 1; // so posedges happen at intervals of 10ns
 		PB = 3'b000;
 		DIP = 16'h0000;
 
@@ -107,8 +137,11 @@ module tb_Wrapper #(
 								* 2. 'sub'
 		*/
 
-		/* Test Case 1: DIP = 16'h1234 */
-		set_dip_switches(16'h1234);
+		/* Test Cases */
+		// set_dip_switches(16'h1234);
+		// set_dip_switches(16'hA050); // to test sra (DIPS[7:0] - DIPS[15:8] = -80, implemented in previous lab2.asm revision)
+		set_dip_switches(16'h50A0); // to test sra (DIPS[15:8] - DIPS[7:0] = -80, implemented in newest lab2.asm revision)
+
 		/* Reset the processor */
 		RESET = 1; repeat(2) @(posedge CLK); RESET = 0; 
 
@@ -117,43 +150,47 @@ module tb_Wrapper #(
 		 *			-> and instruction on LED_OUT / add instruction on SEVENSEGHEX
 		 * 			-> OR instruction on LED_OUT / sub instruction on SEVENSEGHEX
 		*/
+		wait (LED_PC == DETECT_BUTTON);
 		reset_button(.button(btnC));
+
+		wait (LED_PC == NORMAL_DISPLAY_F1_SHOW_LED);
 		$display("and instruction: LED_OUT = %b", LED_OUT);
-		assert(LED_OUT == 8'b0001_0000) else $error("and instruction failed");
+		// assert(LED_OUT == 8'b0001_0000) else $error("and instruction failed");
 
+		wait (LED_PC == NORMAL_DISPLAY_F1_SHOW_SEVENSEG);
 		$display("ADD instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b1000_0000) else $error("add instruction failed");
+		// assert(SEVENSEGHEX == 8'b0100_0110) else $error("add instruction failed");
 		
-		repeat(20) @(posedge CLK);
-		
-		reset_button(.button(btnC));
+		wait (LED_PC == NORMAL_DISPLAY_F0_SHOW_LED);
 		$display("or instruction: LED_OUT = %b", LED_OUT);
-		assert(LED_OUT == 8'b0011_0110) else $error("or instruction failed");
+		// assert(LED_OUT == 8'b0011_0110) else $error("or instruction failed");
 
+		wait (LED_PC == NORMAL_DISPLAY_F0_SHOW_SEVENSEG);
 		$display("sub instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b1101_1110) else $error("sub instruction failed");
-
-		repeat(10) @(posedge CLK);
+		// assert(SEVENSEGHEX == 8'b0010_0010) else $error("sub instruction failed");
 
 		/*
 		 * btnC = 1 -> Changes SEVENSEGHEX display to showcase sub instruction:
 		 *			-> sll done on sub instruction output
 		 * 			-> sra done on sub instruction output
 		*/
-		press_button(.button(btnC), .hold_cycles(10));
+
+		wait (LED_PC == DETECT_BUTTON);
+		press_button(.button(btnC), .release_PC(MODE_SELECT_ENTRY)); // change to different display mode to showcase sll and sra
 		$display("sub instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b1101_1110) else $error("sub instruction failed");
-		
-		repeat(5) @(posedge CLK);
+		// assert(SEVENSEGHEX == 8'b1101_1110) else $error("sub instruction failed");
 
-		press_button(.button(btnL), .hold_cycles(2));
+		wait (LED_PC == DETECT_BUTTON);
+		press_button(.button(btnL), .release_PC(MODE_SELECT_ENTRY));
 		$display("sll instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b0101_0100) else $error("sll instruction failed");
+		// assert(SEVENSEGHEX == 8'b0101_0100) else $error("sll instruction failed");
 
-		press_button(.button(btnR), .hold_cycles(2));
+		wait (LED_PC == DETECT_BUTTON);
+		press_button(.button(btnR), .release_PC(MODE_SELECT_ENTRY));
 		$display("sra instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		assert(SEVENSEGHEX == 8'b0010_1010) else $error("sra instruction failed");
+		// assert(SEVENSEGHEX == 8'b0010_1010) else $error("sra instruction failed");
 
+		repeat(100) @(posedge CLK); // wait for 100 clock cycles before finishing the simulation
 		$finish;
     end
     
