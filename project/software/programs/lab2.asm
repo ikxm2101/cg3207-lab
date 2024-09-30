@@ -9,90 +9,99 @@ main:
     li s2, 0x00002404       # to show lui
     la s3, PBS              
     la s4, SEVENSEG
-    li t6, 0x1             # Shift constant
+    li t6, 0x1              # Shift constant
+    li a5, 0x1              # Flag for mode
+    li s10, 0x1
+    li a6, 0x0              # Previous sub value (unshifted)
+    li a7, 0x0              # Shifted sub value
 
-loop:
+detect_button:
+    lw t4, (s3)             # Get button values
+    andi a2, t4, 0x4        # Left button flag
+    andi a3, t4, 0x2        # Center button flag
+    andi a4, t4, 0x1        # Right button flag
+    beq t4, zero, mode_select   # if button not pressed, goto mode_select.
+    lw s11, DEBOUNCE_VAL       # debounce wait time
+
+debounce:
+    addi s11, s11, -1       # decrement
+    bne s11, zero, debounce
+
+mode_select:
     # Load value of DIPS to t0
     lw t0, (s2)             # Read value of DIPS
 
     # Load 8 least significant value of DIPS to t1
-    andi t1, t0, 0xFF       
+    andi t1, t0, 0xFF       # DIPS[7:0]
 
     # Load 8 most signficant value of DIPS to t3
     li t2, 0x8              # Load immediate, will be decomposed to addi since imm is small
-    srl t3, t0, t2          # shift right by 8 bits
-    andi t3, t3, 0xFF       
+    srl t3, t0, t2          # Shift right by 8 bits
+    andi t3, t3, 0xFF       # DIPS[15:8]
 
     # Perform AND, OR, +, - operations between t1 and t3
-    and s6, t3, t1          # DIPS [15:8] and DIPS [7:0] 
-    or s7, t3, t1           # DIPS [15:8] or DIPS [7:0] 
-    add s8, t3, t1          # DIPS [15:8] + DIPS [7:0] 
-    sub s9, t3, t1          # DIPS [15:8] - DIPS [7:0] 
+    and s6, t3, t1          # DIPS[15:8] and DIPS[7:0] 
+    or s7, t3, t1           # DIPS[15:8] or DIPS[7:0] 
+    add s8, t3, t1          # DIPS[15:8] + DIPS[7:0] 
+    sub s9, t3, t1          # DIPS[15:8] - DIPS[7:0] 
 
-    # Flag for Display
-    li, s10, 0x1
+    # Check for center button press
+    bne a3, zero, toggle_mode   # If btnC is pressed, go to toggle_mode
+    j continue              # Else go to //todo:
+    
+toggle_mode: 
+    beq a5, zero, toggle_flag
+    li a5, 0
+    j continue
 
-display_fork:
+toggle_flag:
+    li a5, 1
+
+continue:
+    beq a5, zero, normal_mode   # If flag is 0, go to normal_mode
+    j shift_mode                # else, go to shift_mode
+
+normal_mode:
+    # check if s5 is zero
+    beq s5, zero, change_display    # if delay expired, change display
+    addi s5, s5, -1             # else decrement
+    j detect_button             # and jump to detect_button
+
+change_display:
     lw s5, DELAY_VAL
-    lw t4, (s3)                     # Read button values
-    andi t4, t4, 0x2                # Mask for BTN C
-    bne t4, zero, shift_display     # If BTN C is pressed go to shifting mode
-    beq s10, zero, display_f0       # If flag not set, go to display_f0
+    beq s10, zero, display_f0
 
 display_f1:             # Display when flag is 1
     sw s6, (s1)         # Write to LED (result of AND)
     sw s8, (s4)         # Write to 7 segment (result of ADD)
     and s10, s10, zero  # Reset flag
-    j display_wait      
+    j detect_button      
 
 display_f0:             # Display when flag is 0
     sw s7, (s1)         # write to LED (result of OR)
     sw s9, (s4)         # write to 7 segment (result of SUB)
     li, s10, 0x1        # Set flag
-    j display_wait
+    j detect_button
 
-display_wait:           # Delay loop
-    addi s5, s5, -1
-    bne s5, zero, display_wait
-    j display_fork
+shift_mode:
+    beq a6, s9, shift_display   # check if previous sub value == current sub value
+    lw a6, s9                   # Store sub to a6 (previous sub value)
+    lw a7, s9                   # Store sub to a7 (changed shifted value)
 
 shift_display:
-    sw s9, (s4) # show DIPS [15:8] - DIPS [7:0] on 7 Seg
-    sw zero, (s1) # clear LEDs
-
-    lw s11, DEBOUNCE_VAL       # debounce wait time
-    j debounce_wait     # debounce centre button
-
-    lw t4, (s3) # read button values
-
-    # Check for Button Press
-    lw t4, (s3)         # Read button values
-    andi t5, t4, 0x2    # Mask for BTN C 
-    bne t5, zero, loop  # if BTN C pressed go to start of loop
-
-    andi t5, t4, 0x4            # Mask for BTN L
-    bne t5, zero, left_shift    # if BTN L pressed left shift
- 
-    andi t5, t4, 0x1            # Mask for BTN R
-    bne t4, zero, right_shift   # if BTN R is pressed
-    
-    j shift_display
+    sw zero, (s1)               # Clear LEDs
+    sw a7, (s4)                 # Show shifted sub on 7-Seg
+    bne a2, zero, left_shift    # Left button pressed
+    bne a4, zero, right_shift   # Right button pressed
+    j detect_button
 
 right_shift:
-    sra s9, s9, t6
-    j shift_display
+    sra a7, a7, t6
+    j detect_button
 
 left_shift:
-    sll s9, s9, t6
-    j shift_display
-
-debounce_wait:
-    addi s11, s11, -1
-    bne s11, zero, debounce_wait
-    j shift_display
-
-
-
+    sll a7, a7, t6
+    j detect_button
 # ------- <code memory (ROM mapped to Instruction Memory) ends>			
 				
 								
