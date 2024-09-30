@@ -15,7 +15,7 @@
 | `sw`         | `M[rs1+imm][0:31] = rs2[0:31]` | &#9745;     |
 | `beq`        | `if(rs1 == rs2) PC += imm`     | &#9745;     |
 | `bne`        | `if(rs1 != rs2) PC += imm`     | &#9745;     |
-| `jal`        | `rd = PC+4; PC += imm`         | &#9745;     |
+| `jal` (without link) | `rd = PC+4; PC += imm`         | &#9745;     |
 
 ### Additional Instructions
 | Instructions | Description             | Implemented |
