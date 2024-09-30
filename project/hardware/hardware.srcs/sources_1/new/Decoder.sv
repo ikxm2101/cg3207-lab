@@ -58,14 +58,14 @@ module Decoder(
     */
 
 	/* Opcode details
-        DP Reg	33 (0110011)
-        DP Imm	13 (0010011)
-        load	03 (0000011)
-        store	23 (0100011)
-        branch	63 (1100011)
-        jal	    6F (1101111)
-        auipc	17 (0010111)
-        lui	    37 (0110111)
+        * DP Reg	33 (0110011)
+        * DP Imm	13 (0010011)
+        * load	    03 (0000011)
+        * store	    23 (0100011)
+        * branch	63 (1100011)
+        * jal	    6F (1101111)
+        * auipc	    17 (0010111)
+        * lui	    37 (0110111)
     */
     
     localparam DP_REG = 7'h33;
