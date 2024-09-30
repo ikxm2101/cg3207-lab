@@ -9,7 +9,7 @@ main:
     li s2, 0x00002404       # to show lui
     la s3, PBS              
     la s4, SEVENSEG
-    li, t6, 0x1             # Shift constant
+    li t6, 0x1             # Shift constant
 
 loop:
     # Load value of DIPS to t0
