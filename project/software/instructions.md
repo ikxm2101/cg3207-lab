@@ -2,19 +2,19 @@
 
 ### Essential Instructions
 
-| Instructions | Description                    | Implemented |
-| ------------ | ------------------------------ | ----------- |
-| `add`        | `rd = rs1 + rs2`               | &#9745;     |
-| `addi`       | `rd = rs1 + imm`               | &#9745;     |
-| `sub`        | `rd = rs1 + rs2`               | &#9745;     |
-| `and`        | `rd = rs1 & rs2`               | &#9745;     |
-| `andi`       | `rd = rs1 & imm`               | &#9745;     |
-| `or`         | `rd = rs1 \| rs2`              | &#9745;     |
-| `ori`        | `rd = rs1 \| imm`              | &#9745;     |
-| `lw`         | `rd = M[rs1+imm][0:31]`        | &#9745;     |
-| `sw`         | `M[rs1+imm][0:31] = rs2[0:31]` | &#9745;     |
-| `beq`        | `if(rs1 == rs2) PC += imm`     | &#9745;     |
-| `bne`        | `if(rs1 != rs2) PC += imm`     | &#9745;     |
+| Instructions         | Description                    | Implemented |
+| -------------------- | ------------------------------ | ----------- |
+| `add`                | `rd = rs1 + rs2`               | &#9745;     |
+| `addi`               | `rd = rs1 + imm`               | &#9745;     |
+| `sub`                | `rd = rs1 + rs2`               | &#9745;     |
+| `and`                | `rd = rs1 & rs2`               | &#9745;     |
+| `andi`               | `rd = rs1 & imm`               | &#9745;     |
+| `or`                 | `rd = rs1 \| rs2`              | &#9745;     |
+| `ori`                | `rd = rs1 \| imm`              | &#9745;     |
+| `lw`                 | `rd = M[rs1+imm][0:31]`        | &#9745;     |
+| `sw`                 | `M[rs1+imm][0:31] = rs2[0:31]` | &#9745;     |
+| `beq`                | `if(rs1 == rs2) PC += imm`     | &#9745;     |
+| `bne`                | `if(rs1 != rs2) PC += imm`     | &#9745;     |
 | `jal` (without link) | `rd = PC+4; PC += imm`         | &#9745;     |
 
 ### Additional Instructions
@@ -56,6 +56,7 @@
 | `t0`  | Value of DIPs              |
 | `t1`  | DIPS [7:0]                 |
 | `t3`  | DIPS [15:8]                |
+| `t6`  | Shift Constant             |
 | `s6`  | DIPS [15:8] and DIPS [7:0] |
 | `s7`  | DIPS [15:8] or DIPS [7:0]  |
 | `s8`  | DIPS [15:8] + DIPS [7:0]   |
