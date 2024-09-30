@@ -55,6 +55,11 @@ display_wait:
 
 button_display:
     sw s9, (s4) # show DIPS [7:0] - DIPS [15:8] on 7 Seg
+    sw zero, (s1) # clear LEDs
+
+    li s10, 0xFFF # debounce wait time
+    j debounce_wait # debounce centre button
+
     lw t4, (s3) # read button values
     li, t6, 0x1 # set the value to shift by
 
@@ -71,15 +76,11 @@ button_display:
 
 right_shift:
     sra s9, s9, t6
-    j seven_display
+    j button_display
 
 left_shift:
     sll s9, s9, t6
-    j seven_display
-
-seven_display:
-    sw s9, (s4) # show result of SUB on 7 Seg
-    li s10, 0xFFF # debounce wait time
+    j button_display
 
 debounce_wait:
     addi s10, s10, -1
