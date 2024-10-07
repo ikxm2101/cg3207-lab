@@ -66,9 +66,9 @@ module test_MCycle(
     initial begin
         // hold reset state for 100 ns.
         #10 ;    
-        MCycleOp = 2'b00 ;
-        Operand1 = 4'b1111 ;
-        Operand2 = 4'b1111 ;
+        MCycleOp = 2'b00 ;              // Signed Multiplication
+        Operand1 = 4'b1111 ; // -1
+        Operand2 = 4'b1111 ; // -1
         Start = 1'b1 ; // Start is asserted continously(Operations are performed back to back). To try a non-continous Start, you can uncomment the commented lines.    
 
         wait(Busy) ; // suspend initial block till condition becomes true  ;
@@ -76,8 +76,8 @@ module test_MCycle(
 //        #10 ;
 //        Start = 1'b0 ;
 //        #10 ;
-        Operand1 = 4'b1110 ;
-        Operand2 = 4'b1111 ;
+        Operand1 = 4'b1110 ; // -2
+        Operand2 = 4'b1111 ; // -1
 //        Start = 1'b1 ;
         
         wait(Busy) ; 
@@ -85,9 +85,9 @@ module test_MCycle(
 //        #10 ;
 //        Start = 1'b0 ;
 //        #10 ;
-        MCycleOp = 2'b01 ;
-        Operand1 = 4'b1111 ;
-        Operand2 = 4'b1111 ;
+        MCycleOp = 2'b01 ;              // Unsigned Multiplication
+        Operand1 = 4'b1111 ; // 15
+        Operand2 = 4'b1111 ; // 15
 //        Start = 1'b1 ;
 
         wait(Busy) ; 
@@ -95,13 +95,48 @@ module test_MCycle(
 //        #10 ;
 //        Start = 1'b0 ;
 //        #10 ;
-        Operand1 = 4'b1110 ;
-        Operand2 = 4'b1111 ;
+        Operand1 = 4'b1110 ; // 14
+        Operand2 = 4'b1111 ; // 15
 //        Start = 1'b1 ;
 
         wait(Busy) ; 
         wait(~Busy) ; 
         Start = 1'b0 ;
+        
+        #10
+        MCycleOp = 2'b10;               // Signed division
+        Operand1 = 4'b1010; // -6
+        Operand2 = 4'b0010; // 2
+        Start = 1'b1;
+
+        wait(Busy);
+        wait(~Busy);
+
+        Operand1 = 4'b1001; // -7
+        Operand2 = 4'b1110; // -2
+
+        wait(Busy);
+        wait(~Busy);
+
+        Operand1 = 4'b0101; // 5
+        Operand2 = 4'b0010; // 2
+
+        wait(Busy);
+        wait(~Busy);
+
+        MCycleOp = 2'b11;               // Unsigned division
+        Operand1 = 4'b1000; // 8
+        Operand2 = 4'b0100; // 4
+
+        wait(Busy);
+        wait(~Busy);
+
+        Operand1 = 4'b0111; // 7
+        Operand2 = 4'b0010; // 2
+        
+        wait(Busy);
+        wait(~Busy);
+        Start = 1'b0;
     end
      
     // GENERATE CLOCK       

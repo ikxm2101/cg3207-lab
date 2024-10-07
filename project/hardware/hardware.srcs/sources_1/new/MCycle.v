@@ -101,6 +101,22 @@ module MCycle
             result_sign = 0;
             shifted_op1 = { {width{~MCycleOp[0] & Operand1[width-1]}}, Operand1 } ; // sign extend the operands  
             shifted_op2 = { {width{~MCycleOp[0] & Operand2[width-1]}}, Operand2 } ; 
+            
+            if (~MCycleOp[0]) begin // Signed Division
+                result_sign = shifted_op1[width-1] ^ shifted_op2[width-1]; // Store result sign
+
+                if (shifted_op1[width-1]) begin
+                    shifted_op1 = ~shifted_op1 + 1; // Changed to unsigned 
+                end
+
+                if (shifted_op2[width-1]) begin
+                    shifted_op2 = ~shifted_op2 + 1; // Changed to unsigned
+                end
+            end
+
+            if (MCycleOp[1]) begin // Division
+                shifted_op2 = { shifted_op2[width-1 : 0], {width{1'b0}} };
+            end
         end
         done <= 1'b0 ;   
         
@@ -119,31 +135,18 @@ module MCycle
                
             count = count + 1;    
         end    
-        else begin // Supposed to be Divide. The dummy code below takes 1 cycle to execute, just returns the operands. Change this to signed [ if(~MCycleOp[0]) ] and unsigned [ if(MCycleOp[0]) ] division.
-            if (~MCycleOp[0]) begin // Signed Division
-                result_sign = shifted_op1[width-1] ^ shifted_op2[width-1]; // Store result sign
-
-                if (shifted_op1[width-1]) begin
-                    shifted_op1 = ~shifted_op1 + 1; // Changed to unsigned 
-                end
-
-                if (shifted_op2[width-1]) begin
-                    shifted_op2 = ~shifted_op2 + 1; // Changed to unsigned
-                end
-            end else begin
-                result_sign = 0; // Always positive for unsigned division
-            end
+        else begin // Supposed to be Divide. Change this to signed [ if(~MCycleOp[0]) ] and unsigned [ if(MCycleOp[0]) ] division.
 
             // Op1: dividend; Op2: divisor; Result = Op1/Op2
             shifted_op1 = shifted_op1 - shifted_op2;
-            if (shifted_op1[width-1] == 1) begin
+            if (shifted_op1[width*2-1] == 1) begin
                 shifted_op1 = shifted_op1 + shifted_op2;    // Restore original dividend
                 temp_sum = {temp_sum[width*2-2 : 0], 1'b0};   // Shift left quotient
             end else begin
                 temp_sum = {temp_sum[width*2-2 : 0], 1'b1};   // Shift left quotient
             end
 
-            shifted_op2 = {1'b0, shifted_op2[width-1 : 1]}; // Shift right divisor
+            shifted_op2 = {1'b0, shifted_op2[width*2-1 : 1]}; // Shift right divisor
 
             // Check for "width" cycle of operations
             if (count == width) begin
