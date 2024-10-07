@@ -60,8 +60,9 @@ module MCycle
     reg [7:0] count = 0 ; // assuming no computation takes more than 256 cycles.
     reg [2*width-1:0] temp_sum = 0 ;
     reg [2*width-1:0] shifted_op1 = 0 ;
-    reg [2*width-1:0] shifted_op2 = 0 ;     
-   
+    reg [2*width-1:0] shifted_op2 = 0 ;   
+    reg result_sign = 0; // 0: positive, 1: negative  
+
     always@( state, done, Start, RESET ) begin : IDLE_PROCESS  
 		// Note : This block uses non-blocking assignments to get around an unpredictable Verilog simulation behaviour.
         // default outputs
@@ -97,9 +98,10 @@ module MCycle
         if( RESET | (n_state == COMPUTING & state == IDLE) ) begin // 2nd condition is true during the very 1st clock cycle of the multiplication
             count = 0 ;
             temp_sum = 0 ;
+            result_sign = 0;
             shifted_op1 = { {width{~MCycleOp[0] & Operand1[width-1]}}, Operand1 } ; // sign extend the operands  
             shifted_op2 = { {width{~MCycleOp[0] & Operand2[width-1]}}, Operand2 } ; 
-        end ;
+        end
         done <= 1'b0 ;   
         
         if( ~MCycleOp[1] ) begin // Multiply
@@ -111,19 +113,52 @@ module MCycle
             shifted_op2 = {1'b0, shifted_op2[2*width-1 : 1]} ;
             shifted_op1 = {shifted_op1[2*width-2 : 0], 1'b0} ;    
                 
+            // If (Unsigned Multiply and last) | (Signed Multiple and last)
             if( (MCycleOp[0] & count == width-1) | (~MCycleOp[0] & count == 2*width-1) ) // last cycle?
                 done <= 1'b1 ;   
                
             count = count + 1;    
         end    
         else begin // Supposed to be Divide. The dummy code below takes 1 cycle to execute, just returns the operands. Change this to signed [ if(~MCycleOp[0]) ] and unsigned [ if(MCycleOp[0]) ] division.
-            temp_sum[2*width-1 : width] = Operand1 ;
-            temp_sum[width-1 : 0] = Operand2 ;
-            done <= 1'b1 ;          
-        end ;
+            if (~MCycleOp[0]) begin // Signed Division
+                result_sign = shifted_op1[width-1] ^ shifted_op2[width-1]; // Store result sign
+
+                if (shifted_op1[width-1]) begin
+                    shifted_op1 = ~shifted_op1 + 1; // Changed to unsigned 
+                end
+
+                if (shifted_op2[width-1]) begin
+                    shifted_op2 = ~shifted_op2 + 1; // Changed to unsigned
+                end
+            end else begin
+                result_sign = 0; // Always positive for unsigned division
+            end
+
+            // Op1: dividend; Op2: divisor; Result = Op1/Op2
+            shifted_op1 = shifted_op1 - shifted_op2;
+            if (shifted_op1[width-1] == 1) begin
+                shifted_op1 = shifted_op1 + shifted_op2;    // Restore original dividend
+                temp_sum = {temp_sum[width*2-2 : 0], 1'b0};   // Shift left quotient
+            end else begin
+                temp_sum = {temp_sum[width*2-2 : 0], 1'b1};   // Shift left quotient
+            end
+
+            shifted_op2 = {1'b0, shifted_op2[width-1 : 1]}; // Shift right divisor
+
+            // Check for "width" cycle of operations
+            if (count == width) begin
+                if (result_sign) begin
+                    temp_sum = ~temp_sum + 1;
+                end
+                temp_sum[2*width-1 : width] = shifted_op1[width-1 : 0]; // Append remainder
+                done <= 1'b1;
+            end
+
+            count = count + 1;        
+        end
         
-        Result2 <= temp_sum[2*width-1 : width] ;
-        Result1 <= temp_sum[width-1 : 0] ;
+        Result2 <= temp_sum[2*width-1 : width] ;    // Or remainder
+        Result1 <= temp_sum[width-1 : 0] ;          // Or quotient 
              
     end
    
