@@ -64,78 +64,232 @@ module test_MCycle(
     
     // STIMULI
     initial begin
-        // hold reset state for 100 ns.
-        #10 ;    
-        MCycleOp = 2'b00 ;              // Signed Multiplication
-        Operand1 = 4'b1111 ; // -1
-        Operand2 = 4'b1111 ; // -1
-        Start = 1'b1 ; // Start is asserted continously(Operations are performed back to back). To try a non-continous Start, you can uncomment the commented lines.    
+        #10 ; // Hold reset state for 100ns.    
+        Start = 1'b0;
 
-        wait(Busy) ; // suspend initial block till condition becomes true  ;
-        wait(~Busy) ;
-//        #10 ;
-//        Start = 1'b0 ;
-//        #10 ;
+        
+        /* SIGNED MULTIPLICATION */
+        MCycleOp = 2'b00;
+
+        // -1 * -1 = 1
+        Operand1 = 4'b1111; // -1
+        Operand2 = 4'b1111; // -1
+        Start = 1'b1;          
+
+        wait(Busy);
+        wait(~Busy);
+        assert(Result1 == 4'b0001 && Result2 == 4'b0000) 
+                else $error("SM: -1 * -1; R1: %b; R2: %b", Result1, Result2);
+
+        #10;
+        Start = 1'b0;
+        #10;
+        
+        // -2 * -1 = 2
         Operand1 = 4'b1110 ; // -2
         Operand2 = 4'b1111 ; // -1
-//        Start = 1'b1 ;
+        Start = 1'b1;
         
         wait(Busy) ; 
         wait(~Busy) ;
-//        #10 ;
-//        Start = 1'b0 ;
-//        #10 ;
-        MCycleOp = 2'b01 ;              // Unsigned Multiplication
+        assert(Result1 == 4'b0010 && Result2 == 4'b0000)
+                else $error("SM: -2 * -1; R1: %b; R2: %b", Result1, Result2);
+
+        #10 ;
+        Start = 1'b0 ;
+        #10 ;
+
+        // -2 * 5 = -10
+        Operand1 = 4'b1110 ; // -2
+        Operand2 = 4'b0101 ; // 5
+        Start = 1'b1;
+        
+        wait(Busy) ; 
+        wait(~Busy) ;
+        assert(Result1 == 4'b0110 && Result2 == 4'b1111)
+                else $error("SM: -2 * 5; R1: %b; R2: %b", Result1, Result2);
+
+
+        #10 ;
+        Start = 1'b0 ;
+        #10 ;
+
+        // 2 * -3 = -6
+        Operand1 = 4'b0010 ; // 2
+        Operand2 = 4'b1101 ; // -3
+        Start = 1'b1;
+        
+        wait(Busy) ; 
+        wait(~Busy) ;
+        assert(Result1 == 4'b1010 && Result2 == 4'b1111)
+                else $error("SM: 2 * -3; R1: %b; R2: %b", Result1, Result2);
+
+        #10 ;
+        Start = 1'b0 ;
+        #10 ;
+
+
+        /* UNSIGNED MULTIPLICATION */
+        MCycleOp = 2'b01 ;
+
+        // 15 * 15 = 225
         Operand1 = 4'b1111 ; // 15
         Operand2 = 4'b1111 ; // 15
-//        Start = 1'b1 ;
+        Start = 1'b1 ;
 
         wait(Busy) ; 
         wait(~Busy) ; 
-//        #10 ;
-//        Start = 1'b0 ;
-//        #10 ;
+        assert(Result1 == 4'b0001 && Result2 == 4'b1110)
+                else $error("USM: 15 * 15; R1: %b; R2: %b", Result1, Result2);
+
+        #10 ;
+        Start = 1'b0 ;
+        #10 ;
+
+        // 14 * 15 = 210
         Operand1 = 4'b1110 ; // 14
         Operand2 = 4'b1111 ; // 15
-//        Start = 1'b1 ;
+        Start = 1'b1 ;
 
         wait(Busy) ; 
         wait(~Busy) ; 
+        assert(Result1 == 4'b0010 && Result2 == 4'b1101)
+                else $error("USM: 14 * 15; R1: %b; R2: %b", Result1, Result2);
+
+        #10;
         Start = 1'b0 ;
-        
         #10
-        MCycleOp = 2'b10;               // Signed division
+
+        // 6 * 7 = 42
+        Operand1 = 4'b0110 ; // 6
+        Operand2 = 4'b0111 ; // 7
+        Start = 1'b1 ;
+
+        wait(Busy) ; 
+        wait(~Busy) ; 
+        assert(Result1 == 4'b1010 && Result2 == 4'b0010)
+                else $error("USM: 6 * 7; R1: %b; R2: %b", Result1, Result2);
+
+        #10;
+        Start = 1'b0 ;
+        #10
+
+        // 2 * 0 = 0
+        Operand1 = 4'b0010 ; // 2
+        Operand2 = 4'b0000 ; // 0
+        Start = 1'b1 ;
+
+        wait(Busy) ; 
+        wait(~Busy) ; 
+        assert(Result1 == 4'b0000 && Result2 == 4'b0000)
+                else $error("USM: 2 * 0; R1: %b; R2: %b", Result1, Result2);
+
+        #10;
+        Start = 1'b0 ;
+        #10
+
+
+        /* SIGNED DIVISION */
+        MCycleOp = 2'b10;
+
+        // -6 / 2 = -3
         Operand1 = 4'b1010; // -6
         Operand2 = 4'b0010; // 2
         Start = 1'b1;
 
         wait(Busy);
         wait(~Busy);
+        assert(Result1 == 4'b1101 && Result2 == 4'b0000)
+                else $error("SD: -6 / 2; R1: %b; R2: %b", Result1, Result2);
 
+        #10;
+        Start = 1'b0;
+        #10;
+
+        // -7/-2 = 3 (+1 rem)
         Operand1 = 4'b1001; // -7
         Operand2 = 4'b1110; // -2
+        Start = 1'b1 ;
 
         wait(Busy);
         wait(~Busy);
+        assert(Result1 == 4'b0011 && Result2 == 4'b0001)
+                else $error("SD: -7 / -2; R1: %b; R2: %b", Result1, Result2);
 
+        #10;
+        Start = 1'b0;
+        #10;
+
+        // 5 / 3 = 1 (+2 rem)
         Operand1 = 4'b0101; // 5
-        Operand2 = 4'b0010; // 2
+        Operand2 = 4'b0011; // 3
+        Start = 1'b1 ;
 
         wait(Busy);
         wait(~Busy);
+        assert(Result1 == 4'b0001 && Result2 == 4'b0010)
+                else $error("SD: 5 / 3; R1: %b; R2: %b", Result1, Result2);
 
-        MCycleOp = 2'b11;               // Unsigned division
-        Operand1 = 4'b1000; // 8
+        #10;
+        Start = 1'b0;
+        #10;
+
+        // 0 / -3 = 0 (0 rem)
+        Operand1 = 4'b0000; // 0
+        Operand2 = 4'b1101; // -3
+        Start = 1'b1 ;
+
+        wait(Busy);
+        wait(~Busy);
+        assert(Result1 == 4'b0000 && Result2 == 4'b0000)
+                else $error("SD: 0 / -3; R1: %b; R2: %b", Result1, Result2);
+
+        #10;
+        Start = 1'b0;
+        #10;
+
+        /* UNSIGNED DIVISION */
+        MCycleOp = 2'b11;
+
+        // 15 / 4 = 3 (+3 rem)
+        Operand1 = 4'b1111; // 15
         Operand2 = 4'b0100; // 4
+        Start = 1'b1;
 
         wait(Busy);
         wait(~Busy);
+        assert(Result1 == 4'b0011 && Result2 == 4'b0011)
+                else $error("USD: 15 / 4; R1: %b; R2: %b", Result1, Result2);
 
+        #10;
+        Start = 1'b0;
+        #10;
+
+        // 7 / 8 = 0 (+7 rem)
         Operand1 = 4'b0111; // 7
-        Operand2 = 4'b0010; // 2
-        
+        Operand2 = 4'b1000; // 8
+        Start = 1'b1;
+
         wait(Busy);
         wait(~Busy);
+        assert(Result1 == 4'b0000 && Result2 == 4'b0111)
+                else $error("USD: 7 / 8; R1: %b; R2: %b", Result1, Result2);
+        
+        #10;
+        Start = 1'b0;
+        #10;
+
+        // 0 / 8 = 0 (0 rem)
+        Operand1 = 4'b0000; // 7
+        Operand2 = 4'b1000; // 8
+        Start = 1'b1;
+
+        wait(Busy);
+        wait(~Busy);
+        assert(Result1 == 4'b0000 && Result2 == 4'b0000)
+                else $error("USD: 0 / 8; R1: %b; R2: %b", Result1, Result2);
+
+        #10;
         Start = 1'b0;
     end
      

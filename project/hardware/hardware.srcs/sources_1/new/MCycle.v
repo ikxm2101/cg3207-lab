@@ -102,7 +102,7 @@ module MCycle
             shifted_op1 = { {width{~MCycleOp[0] & Operand1[width-1]}}, Operand1 } ; // sign extend the operands  
             shifted_op2 = { {width{~MCycleOp[0] & Operand2[width-1]}}, Operand2 } ; 
             
-            if (~MCycleOp[0]) begin // Signed Division
+            if (MCycleOp == 2'b10) begin // Signed Division
                 result_sign = shifted_op1[width-1] ^ shifted_op2[width-1]; // Store result sign
 
                 if (shifted_op1[width-1]) begin
