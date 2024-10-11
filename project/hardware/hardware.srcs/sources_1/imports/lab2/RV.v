@@ -96,14 +96,13 @@ module RV(
     /* ProgramCounter signals */
     // wire CLK ;
     // wire RESET ;
-    wire WE_PC ;    
+    wire PC_WE ;    
     wire [31:0] PC_IN ;
     // wire [31:0] PC ; 
-        
+    
     /* Other internal signals */
     wire [31:0] PC_Offset ;
     wire [31:0] Result ;
-    
 
     assign MemRead = MemtoReg; // This is needed for the proper functionality of some devices such as UART CONSOLE
     assign WE_PC = 1 ; // Will need to control it for multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
@@ -191,7 +190,7 @@ module RV(
     ProgramCounter IProgramCounter_1 (
         .CLK(CLK),
         .RESET(RESET),
-        .WE_PC(WE_PC),    
+        .PC_WE(PC_WE),    
         .PC_IN(PC_IN),
         .PC(PC)  
     );     
