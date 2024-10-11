@@ -10,8 +10,9 @@
 #--		(vi) retain this notice in this file and any files derived from this.
 #----------------------------------------------------------------------------------
 
-# This sample program prints "Welcome to CG3207" in response to "A\r" (A+Enter) received from Console. There should be a sufficient time gap between the press of 'A' and '\r'
+# This sample program prints "Welcome to CG3207" in response to "A\r" (A+Enter) received from Console. There should be a sufficient time gap between the press of 'A' and '\r' 
 # if the processor is run at a low freq.
+# Important: This version requires full jal and jalr implementation (including the link functionality)
 
 .eqv LSB_MASK 0xFF
 
@@ -23,6 +24,7 @@
 # Pseudoinstructions may be implemented using more than one actual instruction. See the assembled code in the Execute tab of RARS
 # You can also use the actual register numbers directly. For example, instead of s6 (ABI name), you can write x22, but the former is preferred
 
+### beginning of main program
 main:   
 	li s6, LSB_MASK			# A mask for extracting out the LSB to check for '\0'
 	la s7, LEDS			# LEDs
@@ -57,9 +59,14 @@ ECHO_CR:
 	beq t0, t2, WAIT_CR 	# perhaps the user is trying again before completing the pervious attempt, or 'A' was repeated. Just a '\r' needed as we already got an 'A'
 	li t1, '\r'
 	bne t0, t1, WAIT_A	# not the correct pattern. try all over again.
-	# "A\r" received. 
+				# "A\r" received. Call PRINT_S subroutine
 	la a0, string1		# a0 stores the value to be displayed. This is the argument passed to PRINT_S
-PRINT_S:			# Call PRINT_S subroutine (not implemented as a subroutine for now as jal doesn't have link and jalr is not implemented)		
+	jal PRINT_S		# PRINT_S function call. Note that if rd is not specified, assembler will generate code for rd=ra (x1). Does jal ra, PRINT_S
+	j WAIT_A		# returned from the PRINT_S function. Go back to the beginning.
+### end of main program
+	
+### beginning of PRINT_S function
+PRINT_S:		
 	lw t0, (a0)		# load the word (4 characters) to be displayed
 	# sw t0, (s11)		# write to seven segment display
 	li t2, 4		# byte counter
@@ -67,17 +74,21 @@ NEXTCHAR:
 	lw t1, (s8)		# check if CONSOLE is ready to send a new character
 	beqz t1, NEXTCHAR	# not ready, continue waiting
 	and t1, t0, s6 		# apply LSB_MASK
-	beqz t1, WAIT_A 	# null terminator ('\0') detected, done. Return to top
+	bnez t1, DONT_RETURN 	# if t1 is not zero, null terminator ('\0') is not detected, Do not return from the function
+	ret			# null terminator detected, return from the function. Does jalr zero, 0(ra)
+DONT_RETURN:
 	sw t1, (s10) 		# write to UART the Byte(4-t2) of the original word (composed of 4 characters) in (7:0) of the word to be written (remember, we can only write words, and LEDs/UART displays only (7:0) of the written word)
 	srli t0, t0, 8	 	# shift so that the next character comes into LSB
 	li t1, 1		# note : no subi instruction in RV
 	sub t2, t2, t1		# decrement the loop counter
 	bnez t2, NEXTCHAR	# check and print the next character in the word
 	addi a0, a0, 4		# point to next word (4 characters)
-	j PRINT_S		# start printing the next word
+	j PRINT_S		# Specify zero as rd as we do not want to overwrite ra.
+### end of PRINT_S function
+
 halt:	
 	j halt			# infinite loop to halt computation. A program should not "terminate" without an operating system to return control to
-				# keep halt: j halt as the last line of your code, though not strictly necessary if there is an infinite loop somewhere.
+				# keep halt: j halt as the last line of your code, though not strictly necessary if there is an infinite loop somewhere. 
 				
 # ------- <code memory (ROM mapped to Instruction Memory) ends>			
 				
@@ -123,11 +134,3 @@ CONSOLE_OUT_ready: .word 0x0	# 0x00002414	# Location simulating UART ready for o
 SEVENSEG: .word	0x0		# 0x00002418	# Location simulating 7-Segment LEDs. Used only in Lab 2 and later
 
 # ------- <memory-mapped input-output (peripherals) ends>
-
-
-
-
-########################### Ignore the code below #######################################
-	#auipc ra,0	# If using a subroutine, store the return value manually since we do not have link
-	#addi ra, 12	# just before a jump to store PC+4 in ra
-	# not using the subroutine for now, as the only way to return is jalr which isn't implemented for Lab 2
