@@ -71,14 +71,14 @@ module Decoder(
         * lui	    37 (0110111)
     */
     
-    localparam DP_REG = 7'h33;
-    localparam DP_IMM = 7'h13;
-    localparam LOAD = 7'h03;
-    localparam STORE = 7'h23;
-    localparam BRANCH = 7'h63;
-    localparam JAL = 7'h6F;
-    localparam AUIPC = 7'h17;
-    localparam LUI = 7'h37;
+    localparam OPCODE_DP_REG = 7'h33;
+    localparam OPCODE_DP_IMM = 7'h13;
+    localparam OPCODE_LOAD = 7'h03;
+    localparam OPCODE_STORE = 7'h23;
+    localparam OPCODE_BRANCH = 7'h63;
+    localparam OPCODE_JAL = 7'h6F;
+    localparam OPCODE_AUIPC = 7'h17;
+    localparam OPCODE_LUI = 7'h37;
     
     /* Funct3 for mul and divu
         * mul       0x00 (000)
@@ -107,42 +107,45 @@ module Decoder(
 
     localparam FUNCT7_M = 7'h01;
 
-    assign RegWrite = (Opcode == STORE || Opcode == BRANCH || Opcode == JAL) ? 1'b0 : 1'b1; // Only for DP Reg, DP Imm, load, auipc, lui
+    assign MemtoReg = (Opcode == OPCODE_LOAD) ? 1'b1 : 1'b0; // Only set for load
+    assign MemWrite = (Opcode == OPCODE_STORE) ? 1'b1 : 1'b0; // Only set for store
+
+    assign RegWrite = (Opcode == OPCODE_STORE || Opcode == OPCODE_BRANCH || Opcode == OPCODE_JAL) ? 1'b0 : 1'b1; // Only set for DP Reg, DP Imm, load, auipc, lui
 
     always_comb begin : PCSBlock
         case (Opcode) 
-            BRANCH: PCS = 2'b01; // branch instruction
-            JAL: PCS = 2'b10; // jal instruction
+            OPCODE_BRANCH: PCS = 2'b01; // branch instruction
+            OPCODE_JAL: PCS = 2'b10; // jal instruction
             default: PCS = 2'b00; // non control instruction
         endcase
     end
 
     always_comb begin : ALUSrcABlock
         case (Opcode)
-            AUIPC: ALUSrcA = 2'b11;
-            LUI: ALUSrcA = 2'b01;
+            OPCODE_AUIPC: ALUSrcA = 2'b11;
+            OPCODE_LUI: ALUSrcA = 2'b01;
             default: ALUSrcA = 2'bx0;
         endcase
     end
 
-    assign ALUSrcB = (Opcode == DP_REG || Opcode == BRANCH) ? 1'b0 : 1'b1;  // Only for DP Imm, load, store, auipc, lui
+    assign ALUSrcB = (Opcode == OPCODE_DP_REG || Opcode == OPCODE_BRANCH) ? 1'b0 : 1'b1;  // Only set for DP Imm, load, store, auipc, lui
 
     always_comb begin : ImmSrcBlock
         case (Opcode)
-            DP_IMM, LOAD: ImmSrc = 3'b011;
-            AUIPC, LUI: ImmSrc = 3'b000;
-            STORE: ImmSrc = 3'b110;
-            BRANCH: ImmSrc = 3'b111;
-            JAL: ImmSrc = 3'b010;
+            OPCODE_DP_IMM, OPCODE_LOAD: ImmSrc = 3'b011;
+            OPCODE_AUIPC, OPCODE_LUI: ImmSrc = 3'b000;
+            OPCODE_STORE: ImmSrc = 3'b110;
+            OPCODE_BRANCH: ImmSrc = 3'b111;
+            OPCODE_JAL: ImmSrc = 3'b010;
             default: ImmSrc = 3'bxxx;
         endcase
     end
 
     always_comb begin : ALUControlBlock
         case (Opcode)
-            BRANCH: ALUControl = 4'b0001;
-            DP_REG: ALUControl = { Funct3, Funct7[5] };
-            DP_IMM: ALUControl = { Funct3, (Funct3 == 3'h5) ? Funct7[5] : 1'b0 };
+            OPCODE_BRANCH: ALUControl = 4'b0001;
+            OPCODE_DP_REG: ALUControl = { Funct3, Funct7[5] };
+            OPCODE_DP_IMM: ALUControl = { Funct3, (Funct3 == 3'h5) ? Funct7[5] : 1'b0 };
             default: ALUControl = 4'b0000;
         endcase
     end
