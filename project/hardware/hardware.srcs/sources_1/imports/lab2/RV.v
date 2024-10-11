@@ -93,6 +93,17 @@ module RV(
     // wire [31:0] ALUResult ;
     wire [2:0] ALUFlags ;
     
+    /* MCycle signals */
+    // wire CLK ;
+    // wire RESET ;
+    wire MCycleStart ;
+    wire [1:0] MCycleOp ;
+    // wire [31:0] Operand1 ;
+    // wire [31:0] Operand2 ; 
+    wire [31:0] MCycle_Result1 ;
+    wire [31:0] MCycle_Result2 ;
+    wire Busy ;
+
     /* ProgramCounter signals */
     // wire CLK ;
     // wire RESET ;
@@ -105,16 +116,16 @@ module RV(
     wire [31:0] Result ;
 
     assign MemRead = MemtoReg; // This is needed for the proper functionality of some devices such as UART CONSOLE
-    assign WE_PC = 1 ; // Will need to control it for multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
+    assign PC_WE = Busy ? 1'b0 : 1'b1; // Will need to control it for multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
     
     // TODO: other datapath connections here
     /* Program counter input */
     assign PC_IN = (PCSrc == 1'b0) ? (PC + 4) : (PC + ExtImm);
 
-    /* ALU inputs */
+    /* ALU and MCycle inputs */
     assign Src_A = (ALUSrcA[0] == 1'b0) ? RD1 : 
-                    (ALUSrcA[1] == 1'b0) ? 1'b0 : PC;
-    assign Src_B = (ALUSrcB == 1'b1) ? ExtImm : RD2;
+                    (ALUSrcA[1] == 1'b0) ? 1'b0 : PC; // MCycle Operand1
+    assign Src_B = (ALUSrcB == 1'b1) ? ExtImm : RD2; // MCycle Operand2
 
     /* Data memory write data */
 	assign WriteData = RD2;
@@ -123,8 +134,16 @@ module RV(
 	assign WE = RegWrite;
 	assign WD = Result;
 
-    /* Datapath result */
-    assign Result = (MemtoReg == 1'b0) ? ALUResult : ReadData;
+    /* Datapath result 
+     * ALUResult: result from ALU block (add, sub, and, or, sll, srl, sra)
+     * MCycle_Result1: MCycle block (mul: LSW, div: Quotient)
+     * MCycle_Result2: MCycle block (mul: MSW, div: Remainder)
+    */ 
+    assign Result = (MemtoReg == 1'b0) ? // check if its a load instruction     
+                    (MCycleStart ? // check if its a multi-cycle instruction
+                    (MCycle_ResultSelect ? MCycle_Result2 : MCycle_Result1) // select MCycle_Result based on the instruction
+                    : ALUResult)
+                    : ReadData; 
 
     /* Instruction from instruction memory */
 	assign rs1 = Instr[19:15];
@@ -166,7 +185,10 @@ module RV(
         .ALUSrcA(ALUSrcA),
         .ALUSrcB(ALUSrcB),
         .ImmSrc(ImmSrc),
-        .ALUControl(ALUControl)
+        .ALUControl(ALUControl),
+        .MCycleStart(MCycleStart),
+        .MCycle_ResultSelect(MCycle_ResultSelect),
+        .MCycleOp(MCycleOp)
     );
                 
     /* Instantiate PC_Logic */
@@ -186,6 +208,19 @@ module RV(
         .ALUFlags(ALUFlags)
     );                
     
+    /* Instantiate MCycle for multi-cycle operations */
+    MCycle IMCycle_1 (
+        .CLK(CLK),
+        .RESET(RESET),
+        .Start(MCycleStart),
+        .MCycleOp(MCycleOp),
+        .Operand1(Src_A),
+        .Operand2(Src_B),
+        .MCycle_Result1(MCycle_Result1),
+        .MCycle_Result2(MCycle_Result2),
+        .Busy(Busy)
+    );
+
     /* Instantiate ProgramCounter */    
     ProgramCounter IProgramCounter_1 (
         .CLK(CLK),
