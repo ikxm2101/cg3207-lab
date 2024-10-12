@@ -26,252 +26,246 @@ main: # Initialise all variables
     la s8, CONSOLE_OUT_ready
     la s9, CONSOLE_IN_valid
     la s10, CONSOLE
-    li a0, 0                    # To store X1 Coordinate
-    li a1, 0
-    li a2, 0
-    li a3, 0
+    li a0, 0                    # X1 Coordinate
+    li a1, 0                    # Y1 Coordinate
+    li a2, 0                    # X2 Coordinate
+    li a3, 0                    # Y2 Coordinate
     li a4, 0                    # Gradient (Magnitude)
     li a5, 0                    # Intercept
-    li t3, 10                   # To store ones position multiplier
-    li t4, 0                    # To store string to be printed
-    li sp, 0
+    li a6, 0                    # Gradient (Sign)
+    li sp, 0                    # flag for Y-line (ie. y1 == y2)
     
 # Print welcome string and ask for X1:
     la t4, welcome_string
-PRINT_1:			
+PRINT_WEL:			
 	lw t0, (t4)		    # load the word (4 characters) to be displayed
 	li t2, 4		    # byte counter
-NEXT_CHAR_1:
-	lw t1, (s8)		    # check if CONSOLE is ready to send a new character
-	beqz t1, NEXT_CHAR_1	# not ready, continue waiting
-	and t1, t0, s6 		# apply LSB_MASK
-	beqz t1, WAIT_X1 	# null terminator ('\0') detected, done. Proceed to X1
-	sw t1, (s10) 		# write to UART the Byte(4-t2) of the original word (composed of 4 characters) in (7:0) of the word to be written (remember, we can only write words, and LEDs/UART displays only (7:0) of the written word)
-	srli t0, t0, 8	 	# shift so that the next character comes into LSB
-	li t1, 1		    # note : no subi instruction in RV
-	sub t2, t2, t1		# decrement the loop counter
-	bnez t2, NEXT_CHAR_1	# check and print the next character in the word
-	addi t4, t4, 4		# point to next word (4 characters)
-	jal PRINT_1
+NEXT_CHAR_WEL:
+	lw t1, (s8)		        # check if CONSOLE is ready to send a new character
+	beqz t1, NEXT_CHAR_WEL	# not ready, continue waiting
+	and t1, t0, s6 		    # apply LSB_MASK to get the least sig byte
+	beqz t1, WAIT_X1 	    # null terminator ('\0') detected, go to X1
+	sw t1, (s10) 		    # write to UART the Byte(4-t2) of the original word (composed of 4 characters) in (7:0) of the word to be written (remember, we can only write words)
+	srli t0, t0, 8	 	    # shift so that the next character comes into LSB
+	li t1, 1		        # note : no subi instruction in RV
+	sub t2, t2, t1		    # decrement the loop counter
+	bnez t2, NEXT_CHAR_WEL	# check and print the next character in the word
+	addi t4, t4, 4		    # point to next word (4 characters)
+	jal PRINT_WEL           # Jump back to printing
 
+    li t3, 10                   # To store ones position multiplier
     # Start reading
 WAIT_X1:
     lw t1, (s9)                 # Read new character flag
-    beq t1, zero, WAIT_X1       # If t1 == 0, goto WAIT_X1
+    beq t1, zero, WAIT_X1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    li t2, '\r'
+    li t2, '\r'                 
     beq t0, t2, WAIT_Y1         # '\r' received, goto to WAIT_Y1
 
-
+    # Populate the register based on characters received
     mul a0, a0, t3              # Make space for ones position                     
-    li t2, 48                   # '0' ascii in int
-    sub t0, t0, t2              # input_char - 48 = input_int
-    # TODO: valid character checking here ???
-    add a0, a0, t0              # a0 = a0 + input_int
-    jal WAIT_X1                 # goto WAIT_X1
+    li t2, 48                   # '0' in ascii
+    sub t0, t0, t2              # integer = input - '0'
+    add a0, a0, t0              # a0 = a0 + integer
+    jal WAIT_X1                 # jump back to receive next character
 
 WAIT_Y1:
     lw t1, (s9)                 # Read new character flag
-    beq t1, zero, WAIT_Y1       # If t1 == 0, goto WAIT_Y1
+    beq t1, zero, WAIT_Y1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     li t2, '\r'
     beq t0, t2, WAIT_X2         # '\r' received, goto to WAIT_X2
 
-
+    # Populate the register based on characters received
     mul a1, a1, t3              # Make space for ones position                     
-    li t2, 48                   # '0' ascii in int
-    sub t0, t0, t2              # input_char - 48 = input_int
-    # TODO: valid character checking here ???
-    add a1, a1, t0              # a0 = a0 + input_int
-    jal WAIT_Y1                 # goto WAIT_Y1
+    li t2, 48                   # '0' in ascii
+    sub t0, t0, t2              # integer = input - '0'
+    add a1, a1, t0              # a0 = a0 + integer
+    jal WAIT_Y1                 # jump back to receive next character
 
 WAIT_X2:
     lw t1, (s9)                 # Read new character flag
-    beq t1, zero, WAIT_X2       # If t1 == 0, goto WAIT_X2
+    beq t1, zero, WAIT_X2       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     li t2, '\r'
     beq t0, t2, WAIT_Y2         # '\r' received, goto to WAIT_Y2
 
-
+    # Populate the register based on characters received
     mul a2, a2, t3              # Make space for ones position                     
-    li t2, 48                   # '0' ascii in int
-    sub t0, t0, t2              # input_char - 48 = input_int
-    # TODO: valid character checking here ???
-    add a2, a2, t0              # a0 = a0 + input_int
-    jal WAIT_X2                 # goto WAIT_X2
+    li t2, 48                   # '0' in ascii
+    sub t0, t0, t2              # integer = input - '0'
+    add a2, a2, t0              # a0 = a0 + integer
+    jal WAIT_X2                 # jump back to receive next character
 
 WAIT_Y2:
     lw t1, (s9)                 # Read new character flag
-    beq t1, zero, WAIT_Y2       # If t1 == 0, goto WAIT_Y2
+    beq t1, zero, WAIT_Y2       # '0' in ascii
     lw t0, (s10)                # Read UART
     li t2, '\r'
     beq t0, t2, CALC            # '\r' received, goto to CALC
 
-
+    # Populate the register based on characters received
     mul a3, a3, t3              # Make space for ones position                     
-    li t2, 48                   # '0' ascii in int
-    sub t0, t0, t2              # input_char - 48 = input_int
-    # TODO: valid character checking here ???
-    add a3, a3, t0              # a0 = a0 + input_int
-    jal WAIT_Y2                 # goto WAIT_Y2
+    li t2, 48                   # '0' in ascii 
+    sub t0, t0, t2              # integer = input - '0'
+    add a3, a3, t0              # a0 = a0 + integer
+    jal WAIT_Y2                 # jump back to receive next character
 
 CALC:
-    # a0: X1, a1: Y1, a2: X2, a3: Y2, t5: gradient sign
+    # a0: X1, a1: Y1, a2: X2, a3: Y2, a6: gradient sign
 
-    beq a0, a2, INVALID_M_INF   # x1 and x2 same, invalid
+    beq a0, a2, INVALID_M_INF   # x1 and x2 same, m is infinite
     sub t0, a0, a2              # x1 - x2
-    and t1, t0, s6              # Apply SIGN MASK
+    and t1, t0, s5              # Apply SIGN MASK
     li t3, 0                    # 0 == X1 > X2      
     beqz t1, CHECK_Y            # t1 == 0, X1 > X2
     li t3, 1                    # 1 == X2 > x1
 
 CHECK_Y:
     sub t0, a1, a3              # y1 - y2 
-    li sp, 1
-    beqz t0, M_ZERO             # TODO:
-    li sp, 0
+    li sp, 1                    # Set Y1==Y2 flag
+    beqz t0, M_ZERO             # If Y1==Y2, then immediately print out
+    li sp, 0                    # Reset Y1==Y2 flag
     and t1, t0, s5              # Apply SIGN MASK
     li t4, 0                    # 0 == Y1 > Y2
     beqz t1, CHECK_M            # t1 == 0, Y1 > Y2
     li t4, 1                    # 1 == Y2 > Y1
 
 CHECK_M:
-    li t5, 0                    
-    beq t3, t4, CALC_M           # Gradient positive
-    li t5, 1
+    li a6, 0                    # Set gradient sign to pos 
+    beq t3, t4, CALC_M          # Gradient positive
+    li a6, 1                    # Set gradient sign to neg
 
 CALC_M:
-    add s8, a0, zero
-    add s9, a1, zero
-    add s10, a2, zero
-    add s11, a3, zero
+    add s8, a0, zero            # Temp value for X1
+    add s9, a1, zero            # Temp value for Y1
+    add s10, a2, zero           # Temp value for X2
+    add s11, a3, zero           # Temp value for Y2
 
-    # t0 t1 t2
     beqz t3, M1                 # if X1 > X2 go to M1
-    # Swap a0 and a2
-    add t0, s8, zero            # t0 = a0
-    add s8, a2, zero            # a0 = a2
-    add s10, t0, zero            # a2 = t0 = a0_ori
+    # otherwise we swap s8 and s10 (for unsigned division purposes)
+    add t0, s8, zero            # t0 = s8 (X1)
+    add s8, s10, zero           # s8 = s10 (X2)
+    add s10, t0, zero           # s10 = t0 (X1)
 
 M1:
-    beqz t4, M2                # if Y1 > Y2, go to M2:
-    # Swap a1 and a3
-    add t0, s9, zero            # t0 = a1
-    add s9, a3, zero            # a1 = a3   
-    add s11, t0, zero            # a3 = t0 = a1_ori
+    beqz t4, M2                 # if Y1 > Y2, go to M2
+    # otherwise we swap s9 and s11 (for unsigned division purposes)
+    add t0, s9, zero            # t0 = s9 (Y1)
+    add s9, s11, zero           # s9 = s11 (Y2) 
+    add s11, t0, zero           # s11 = t0 (Y1)
 
 M2:
-    sub t0, s8, s10              # t0 = a0 - a2
-    sub t1, s9, s11              # t1 = a1 - a3
-    divu a4, t1, t0             # t2 = t1 / t0
+    sub t0, s8, s10             # t0 = delta of X
+    sub t1, s9, s11             # t1 = delta of Y
+    divu a4, t1, t0             # a4 = t1 / t0
 
     mul t0, a0, a4              # t0 = X1 * Gradient
-    beq t5, zero, Y_INTER       # Check gradient sign
+    beq a6, zero, Y_INTER       # Check gradient sign
     sub t0, zero, t0            # negative: negate t0
 Y_INTER:
     sub a5, a1, t0              # y_int = Y1 - t0
 
 # Printing data
 M_ZERO:
-    la t0, string_1  
+    la t0, string_1             # Load address of string
 PRINT_RES:
-    lw t1, (t0)
-    li t2, 4
-NEXTCHAR:
-    lw t3, (s8)         # Check if console is ready
-    beqz t3, NEXTCHAR
-    and t3, t1, s6
-    beqz t3, CONTINUE
-    sw t3, (s10)
-    srli t1, t1, 8
-    li t3, 1
-    sub t2, t2, t1
-    bnez t2, NEXTCHAR
-    addi t0, t0, 4
-    jal PRINT_RES
+    lw t1, (t0)                 # Load word (4 chars)
+    li t2, 4                    # Byte counter
+NEXT_CHAR_RES:
+    lw t3, (s8)                 # Check if console is ready
+    beqz t3, NEXT_CHAR_RES      # Not ready, continue waiting
+    and t3, t1, s6              # Apply LSB_MASK
+    beqz t3, CONTINUE           # "\0" detected, finish printing
+    sw t3, (s10)                # Write to CONSOLE
+    srli t1, t1, 8              # shift next char
+    li t3, 1                    # no subi instruction
+    sub t2, t2, t1              # decrement counter
+    bnez t2, NEXT_CHAR_RES      # print next char in current word
+    addi t0, t0, 4              # load next word in string
+    jal PRINT_RES               # repeat word print
 
 CONTINUE:
-    beqz t5, CONTINUE_1
-    lw t3, (s8)
-    beqz t3, CONTINUE
-    li t3, '-'
-    sw t3, (s10)
+    beqz a6, CONTINUE_1         # if gradient is positive, no need print sign
+    lw t3, (s8)                 # Check if console is ready
+    beqz t3, CONTINUE           # Not ready, continue waiting
+    li t3, '-'                  # Load '-' for printing
+    sw t3, (s10)                # Print to console
     
-    beqz sp, CONTINUE_1 
-
-    lw t0, (a1)
-    li t1, 10
-    jal CONTINUE_1_DIV
+    beqz sp, CONTINUE_1         # if Y1 != Y2, go to printing gradient
+    add t0, zero, a1            # otherwise load Y1
+    jal CONTINUE_1_DIV          # print it
 
 CONTINUE_1:
-    lw t0, (a4)       # Gradient
-    li t1, 10
+    add t0, zero, a4            # Load gradient (magnitude)
 
 CONTINUE_1_DIV:
-    beqz t0, CONTINUE_2
-    div t0, t0, t1
-    rem t2, t0, t1
-    addi t2, t2, 48 # Convert to ascii
+    li t1, 10                   # Ones multiplier
+    beqz t0, CONTINUE_2         # 0 to print, continue to next step
+    rem t2, t0, t1              # extract the remainder (last digit in base10)
+    div t0, t0, t1              # remove the last digit in base 10
+    addi t2, t2, 48             # Convert to ascii
     
 CONTINUE_1_WAIT:
-    lw t3, (s8) # Wait for ready
-    beqz t3, CONTINUE_1_WAIT
-    sw t2, (s10)
-    jal CONTINUE_1_DIV
+    lw t3, (s8)                 # Check if console is ready
+    beqz t3, CONTINUE_1_WAIT    # Not ready, continue waiting
+    sw t2, (s10)                # Write to Console
+    jal CONTINUE_1_DIV          # Repeat printing digits
 
 CONTINUE_2:
-    bnez sp, main
+    bnez sp, main               # if Y1 == Y2, go back to top
 
-    lw t3, (s8)
-    beqz t3, CONTINUE_2
-    li t3, 'X'
-    sw t3, (s10)
+    lw t3, (s8)                 # Check if console is ready
+    beqz t3, CONTINUE_2         # Not ready, continue waiting
+    li t3, 'X'                  # Load 'X' to be printed
+    sw t3, (s10)                # Write to CONSOLE
 
-    and t0, a5, s5           # SIGN MASK
-    li t3, '+'
-    beqz t0, CONTINUE_2_SIGN  # if t0 == 0, positive
-    li t3, '-'
-    sub a5, zero, a5         # Magnitude of intercept
+    beqz t0, main               # if y-intercept is 0, go back to top
+
+    and t0, a5, s5              # Apply SIGN MASK to Y-Intercept
+    li t3, '+'                  # Load '+' sign
+    beqz t0, CONTINUE_2_SIGN    # if Y-intercept positive, print sign
+    li t3, '-'                  # otherwise load '-' sign
+    sub a5, zero, a5            # Magnitude of intercept
 
 CONTINUE_2_SIGN:
-    lw t0, (s8)
-    beqz t0, CONTINUE_2_SIGN
-    sw t3, (s10)            # Print sign
+    lw t0, (s8)                 # Check if console is ready
+    beqz t0, CONTINUE_2_SIGN    # Not ready, continue waiting
+    sw t3, (s10)                # Print sign
 
-    lw t0, (a5)   # Intercept magnitude
-    li t1, 10
-CONTINUE_2_DIV:
-    beqz t0, main
-    div t0, t0, t1
-    rem t2, t0, t1
-    addi t2, t2, 48
+    add t0, zero, a5            # Temporary for y-intercept mag
+    li t1, 10                   # ones multiplier
+    
+CONTINUE_2_DIV:         
+    beqz t0, main               # If no more digit to print, go to main        
+    rem t2, t0, t1              # Extract remainder (last digit of base-10)
+    div t0, t0, t1              # Remove last digit of base-10
+    addi t2, t2, 48             # Convert to ASCII
 
 CONTINUE_2_WAIT:
-    lw t3, (s8) # Wait for ready
-    beqz t3, CONTINUE_2_WAIT
-    sw t2, (s10)
-    jal CONTINUE_2_DIV
+    lw t3, (s8)                 # Check if console is ready
+    beqz t3, CONTINUE_2_WAIT    # Not ready, continue waiting
+    sw t2, (s10)                # Write character to console
+    jal CONTINUE_2_DIV          # Continue printing next digit
 
 
 INVALID_M_INF:
-    la t4, string_2
+    la t4, string_2         # Load invalid string
 PRINT_2:			
-	lw t0, (t4)		    # load the word (4 characters) to be displayed
-	li t2, 4		    # byte counter
+	lw t0, (t4)		        # load the word (4 characters) to be displayed
+	li t2, 4		        # byte counter
 NEXT_CHAR_2:
-	lw t1, (s8)		    # check if CONSOLE is ready to send a new character
+	lw t1, (s8)		        # check if CONSOLE is ready to send a new character
 	beqz t1, NEXT_CHAR_2	# not ready, continue waiting
-	and t1, t0, s6 		# apply LSB_MASK
-	beqz t1, main 	# null terminator ('\0') detected, done. Proceed to X1
-	sw t1, (s10) 		# write to UART the Byte(4-t2) of the original word (composed of 4 characters) in (7:0) of the word to be written (remember, we can only write words, and LEDs/UART displays only (7:0) of the written word)
-	srli t0, t0, 8	 	# shift so that the next character comes into LSB
-	li t1, 1		    # note : no subi instruction in RV
-	sub t2, t2, t1		# decrement the loop counter
+	and t1, t0, s6 		    # apply LSB_MASK
+	beqz t1, main 	        # null terminator ('\0') detected, done. Proceed to X1
+	sw t1, (s10) 		    # write to UART the Byte(4-t2) of the original word (composed of 4 characters) in (7:0) of the word to be written (remember, we can only write words, and LEDs/UART displays only (7:0) of the written word)
+	srli t0, t0, 8	 	    # shift so that the next character comes into LSB
+	li t1, 1		        # note : no subi instruction in RV
+	sub t2, t2, t1		    # decrement the loop counter
 	bnez t2, NEXT_CHAR_2	# check and print the next character in the word
-	addi t4, t4, 4		# point to next word (4 characters)
-	jal PRINT_2
-
-
+	addi t4, t4, 4		    # point to next word (4 characters)
+	jal PRINT_2             # continue printing
     
     
 # ------- <code memory (ROM mapped to Instruction Memory) ends>			
