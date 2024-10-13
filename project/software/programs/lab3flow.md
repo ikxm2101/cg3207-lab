@@ -35,7 +35,7 @@
 | s7   | LEDS                                       | 0x00002400    |
 | s8   | CONSOLE_OUT_ready                          | 0x00002414    |
 | s9   | CONSOLE_IN_valid                           | 0x00002410    |
-| s10  | CONSOLE                                    | 0x00002418    |
+| s10  | CONSOLE                                    | 0x0000240C    |
 | a0   | X1 Coordinate                              | 0             |
 | a1   | Y1 Coordinate                              | 0             |
 | a2   | X2 Coordinate                              | 0             |
@@ -45,3 +45,6 @@
 | a6   | Gradient (Sign) 0 = Positive, 1 = Negative | 0             |
 
 
+### Quirks
+- Programme does not handle negative input
+- Programme does not check if character is a valid character
