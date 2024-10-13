@@ -79,7 +79,7 @@ WAIT_Y1:
     # Populate the register based on characters received
     mul a1, a1, s3              # Make space for ones position                     
     sub t0, t0, s2              # integer = input - '0'
-    add a1, a1, t0              # a0 = a0 + integer
+    add a1, a1, t0              # a1 = a1 + integer
     jal WAIT_Y1                 # jump back to receive next character
 
 WAIT_X2:
@@ -92,7 +92,7 @@ WAIT_X2:
     # Populate the register based on characters received
     mul a2, a2, s3              # Make space for ones position                     
     sub t0, t0, s2              # integer = input - '0'
-    add a2, a2, t0              # a0 = a0 + integer
+    add a2, a2, t0              # a2 = a2 + integer
     jal WAIT_X2                 # jump back to receive next character
 
 WAIT_Y2:
@@ -105,7 +105,7 @@ WAIT_Y2:
     # Populate the register based on characters received
     mul a3, a3, s3              # Make space for ones position                     
     sub t0, t0, s2              # integer = input - '0'
-    add a3, a3, t0              # a0 = a0 + integer
+    add a3, a3, t0              # a3 = a3 + integer
     jal WAIT_Y2                 # jump back to receive next character
 
 CALC:
@@ -120,9 +120,9 @@ CALC:
 
 CHECK_Y:
     sub t0, a1, a3              # y1 - y2 
-    li s1, 1                    # Set Y1==Y2 flag
-    beqz t0, M_ZERO             # If Y1==Y2, then immediately print out
-    li s1, 0                    # Reset Y1==Y2 flag
+    li s1, 1                    # Set Y1 == Y2 flag
+    beqz t0, M_ZERO             # If Y1 == Y2, then immediately print out
+    li s1, 0                    # Reset Y1 == Y2 flag
     and t1, t0, s5              # Apply SIGN MASK
     li t4, 0                    # 0 == Y1 > Y2
     beqz t1, CHECK_M            # t1 == 0, Y1 > Y2
@@ -203,15 +203,12 @@ CONTINUE_1:
     add t0, zero, a1            # otherwise load Y1
 
 CONTINUE_1_DIV:
-    beqz t0, PRINT_GRADIENT_CONTINUE    # 0 to add to stack, go to print
+    beqz t0, PRINT_GRADIENT_CONTINUE    # If nothing to add to stack, go to print
     rem t2, t0, s3                      # extract the remainder (last digit in base10)
     div t0, t0, s3                      # remove the last digit in base 10
     add t2, t2, s2                      # Convert to ascii
     
 CONTINUE_1_WAIT:
-    # lw t3, (s8)                 # Check if console is ready
-    # beqz t3, CONTINUE_1_WAIT    # Not ready, continue waiting
-    # sw t2, (s10)                # Write to Console
     sw t2, (t5)                 # store digit into stack
     addi t4, t4, 1              # increase number of characters
     addi t5, t5, 4              # move pointer to next memory location    
@@ -262,9 +259,6 @@ CONTINUE_2_DIV:
     add t2, t2, s2                  # Convert to ASCII
 
 CONTINUE_2_WAIT:
-    # lw t3, (s8)                 # Check if console is ready
-    # beqz t3, CONTINUE_2_WAIT    # Not ready, continue waiting
-    # sw t2, (s10)                # Write character to console
     sw t2, (t5)                 # store digit into stack
     addi t4, t4, 1              # increase number of characters
     addi t5, t5, 4              # move pointer to next memory location
@@ -272,9 +266,9 @@ CONTINUE_2_WAIT:
     jal CONTINUE_2_DIV          # Continue printing next digit
 
 PRINT_INT_CONTINUE:
-    beqz t4, main     # If nothing else to print go to main
+    beqz t4, main           # If nothing else to print go to main
     addi t4, t4, -1         # decrement number of characters
-    addi t5, t5, -4          # move to next character
+    addi t5, t5, -4         # move to next character
 
 PRINT_INT_WAIT:
     lw t0, (s8)                     # check if console is ready
