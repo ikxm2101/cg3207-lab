@@ -22,3 +22,26 @@
     - if X1==X2, print "Gradient is infinity"
     - if Y1==Y2, print "Equation: Y = [-]\<Y1\>"
     - otherwise, print "Equation: Y = [-]\<m\>X[+/-]\<intercept\>"
+  
+  ### Variables
+| Name | Description                                | Initial Value |
+| ---- | ------------------------------------------ | ------------- |
+| s1   | flag for Y-line (ie. y1 == y2)             | 0             |
+| s2   | Value of '0' in ASCII                      | 48            |
+| s3   | Value of 10 for multiplier                 | 10            |
+| s4   | Value of '\r'                              |               |
+| s5   | SIGN_MASK                                  | 0x80000000    |
+| s6   | LSB_MASK                                   | 0xFF          |
+| s7   | LEDS                                       |               |
+| s8   | CONSOLE_OUT_ready                          |               |
+| s9   | CONSOLE_IN_valid                           |               |
+| s10  | CONSOLE                                    |               |
+| a0   | X1 Coordinate                              | 0             |
+| a1   | Y1 Coordinate                              | 0             |
+| a2   | X2 Coordinate                              | 0             |
+| a3   | Y2 Coordinate                              | 0             |
+| a4   | Gradient (Magnitude)                       | 0             |
+| a5   | Intercept                                  | 0             |
+| a6   | Gradient (Sign) 0 = Positive, 1 = Negative | 0             |
+
+
