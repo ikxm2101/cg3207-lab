@@ -192,17 +192,15 @@ CONTINUE:
     beqz t3, CONTINUE           # Not ready, continue waiting
     li t3, '-'                  # Load '-' for printing
     sw t3, (s10)                # Print to console
-    
-    beqz s1, CONTINUE_1         # if Y1 != Y2, go to printing gradient
-    add t0, zero, a1            # otherwise load Y1
-
-    jal CONTINUE_1_DIV          # print it
 
 CONTINUE_1:
     add t0, zero, a4            # Load gradient (magnitude)
     addi sp, sp, -48            # stack grow donwards
     li t4, 0                    # counter for number of characters
     add t5, sp, zero            # stack pointer for storing digits
+
+    beqz s1, CONTINUE_1_DIV     #  if Y1 != Y2, go to printing gradient
+    add t0, zero, a1            # otherwise load Y1
 
 CONTINUE_1_DIV:
     beqz t0, PRINT_GRADIENT_CONTINUE    # 0 to add to stack, go to print
@@ -311,10 +309,15 @@ NEXT_CHAR_2:
 # All constants should be declared in this section. This section is read only (Only lw, no sw).
 # Total number of constants should not exceed 128
 # If a variable is accessed multiple times, it is better to store the address in a register and use it rather than load it repeatedly.
+# Alignment is needed such that when the string is loaded the address would be valid
 DROM:
+.align 4
 DELAY_VAL: .word 0x2422
+.align 4
 welcome_string: .asciz "\r\nWelcome to desmos but taobao\r\n Enter X1, Y1, X2, Y2 separated by a carriage return.\r\n"
+.align 4
 string_1: .asciz "\r\nEquation: Y = "
+.align 4
 string_2: .asciz "\r\nGradient is infinity\r\n"
 
 #------- <constant memory (ROM mapped to Data Memory) ends>	
