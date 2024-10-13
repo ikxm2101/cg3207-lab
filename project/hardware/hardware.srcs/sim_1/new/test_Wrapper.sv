@@ -12,7 +12,7 @@
 --		(vi) retain this notice in this file or any files derived from this.
 ----------------------------------------------------------------------------------
 */
-module tb_Wrapper #(
+module test_Wrapper #(
 	parameter N_LEDs_OUT	= 8,					
 	parameter N_DIPs		= 16,
 	parameter N_PBs			= 3 

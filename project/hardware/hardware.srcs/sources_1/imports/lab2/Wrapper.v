@@ -2,7 +2,7 @@
 /*
 ----------------------------------------------------------------------------------
 -- Company: NUS	
--- Engineer: (c) Thao Nguyen and Rajesh Panicker  
+-- Engineer: Rajesh Panicker  
 -- 
 -- Create Date: 09/22/2020 06:49:10 PM
 -- Module Name: Wrapper
@@ -31,11 +31,33 @@
 ----------------------------------------------------------------------------------
 */
 
-//>>>>>>>>>>>> ******* FOR SIMULATION. DO NOT SYNTHESIZE THIS DIRECTLY (This is use as a component in TOP.vhd for Synthesis) ******* <<<<<<<<<<<<
+//>>>>>>>>>>>> ******* FOR SIMULATION. DO NOT SYNTHESIZE THIS DIRECTLY (This is used as a component in TOP.vhd for Synthesis) ******* <<<<<<<<<<<<
+
+
+/*
+******* New features in V2 *******
+- Ability to use the hexadecimal text dump from RARS directly without any conversion software or copy-pasting needed.
+- Instruction and data memory sizes can be bigger than 128 words. Be mindful of the potentially increased synthesis time though.
+- Addresses except IROM_BASE and DATA_MEM_BASE are hierarchically derived instead of hard-coding.
+- Byte and half-word write to data memory and 7-segment display (sb and sh support) - aligned memory addresses and pre-shifted/aligned data required. Please read the relevant comments carefully.
+--Note: byte and half-word read don't require any Wrapper support - you can simply read the whole byte, extract the byte/half-word, and extend as necessary.
+- Possible to use a different Memory Configuration from RARS, *except* supporting 32'hFFFF0000 as the MMIO base in the RARS default. MMIO_BASE = DRAM_BASE + 2**DRAM_DEPTH_BITS in all configs.
+- Possible to use block RAMs (sync read) for instruction and data memories in the pipelined version. Allows faster synthesis times and possibly clock rates for larger memory sizes.
+- Renamed for simplicity and concistency with assembly program labels: INSTR_MEM->IROM; DATA_CONST_MEM->DROM; DATA_VAR_MEM->DRAM
+- Updated files: Wrapperv2.v, RVv2.v, and ProgramCounterv2.v (necessary only if the Memory Configuration is changed in RARS).
+*/
+
+/*
+V2:
+To use FPGA block RAMs for instruction and data memories in pipelined version (Allows faster synthesis times and possibly clock rates for larger memory sizes):
+(Disclaimer: Not tested fully), Uncomment line 225. Comment 231 to 233. Change 238, 248, 255, 273 to always@(posedge clk)
+If enabled, Instr, ReadData_in are delayed by 1 cycle. Therefore, what you get can be used as InstrD, ReadDataW directly. MMIO reads are also delayed. 
+The required byte/half-word will still have to be extracted from ReadDataW and zero/sign extended in W stage if using lb/lbu/lh/lhu.
+*/
 
 module Wrapper
 #(
-	parameter N_LEDs_OUT      = 8,   // Number of LEDs displaying Result. LED(15 downto 15-N_LEDs_OUT+1). 8 by default
+	parameter N_LEDs_OUT = 8,        // Number of LEDs displaying Result. LED(15 downto 15-N_LEDs_OUT+1). 8 by default
 	parameter N_DIPs = 16,           // Number of DIPs. 16 by default
 	parameter N_PBs  = 3             // Number of PushButtons. 3 by default
 		                             // [2:0] -> BTNL, BTNC, BTNR. Note that BTNU is used as PAUSE and BTND is used as RESET
@@ -66,131 +88,239 @@ module Wrapper
 											// It can be read from the address 0x00000C10.
 	output reg CONSOLE_IN_ack,              // An indication to the UART hardware that the processor has read the newly received data byte.
 	                                        // The testbench should clear CONSOLE_IN_valid when this is set.
-	input  RESET,							// Active high. Implemented in TOP as not(CPU_RESET) or Internal_reset (CPU_RESET is red push button and is active low).
-	input  CLK								// Divided Clock from TOP.
-);                                             
+	input  RESET,				// Active high. Implemented in TOP as not(CPU_RESET) or Internal_reset (CPU_RESET is red push button and is active low).
+	input  CLK				// Divided Clock from TOP.
+);
 
+
+//----------------------------------------------------------------
+// V2: Sizes of various segments, base addresses, and peripheral address offsets.
+//----------------------------------------------------------------
+// Set the number of bits for the byte address. 
+// Depth (size) = 2**DEPTH_BITS. e.g.,if DEPTH_BITS = 9, depth = 512 bytes = 128 words. 
+// Make sure that the align directive in the assembly programme is set according to the sizes of the various segments.
+// The size of a data segment affects the *next* segment alignment and address.
+// Keep in mind that large memory sizes can cause synthesis times to be longer, esp if not using synch read (block RAM)
+
+localparam IROM_DEPTH_BITS = 9; 
+localparam DROM_DEPTH_BITS = 9;
+localparam DRAM_DEPTH_BITS = 9;
+
+// Base addresses of various segments
+// The RARS default memory configuration is IROM_BASE = 32'h00400000 and DATA_MEM_BASE = 32'h10010000 in RARS.
+// The RARS default MMIO base is 32'hFFFF0000, but this is hard to support. So we use MMIO_BASE = DRAM_BASE + 2**DRAM_DEPTH_BITS in all memory configurations
+// We use compact memory configuration with .txt at 0 where IROM_BASE = 32'h00000000 and DATA_MEM_BASE = 32'h00002000, but you can change this to either of the other two if you wish.
+// Do not use absolute addresses (e.g., using li pseudoinstruction for addresses) for memory/MMIO unless you know what you are doing. If you are building on the sample HelloWorld, use la for SEVENSEG.
+//  Relative addresses (e.g., la pseudoinstruction) work fine for all starting addresses and segment sizes
+
+localparam IROM_BASE = 32'h00000000;		// make sure this is the same as the .txt address based on the Memory Configuration set in the assembler/linker 
+                                            	// and the PC default value as well as reset value in **ProgramCounter.v** 
+localparam DATA_MEM_BASE = 32'h00002000;    	// make sure this is the same as the .data address based on the Memory Configuration set in the assembler/linker
+localparam DROM_BASE = DATA_MEM_BASE + 32'h00000000;
+localparam DRAM_BASE = DROM_BASE + 2**DROM_DEPTH_BITS;
+localparam MMIO_BASE = DRAM_BASE + 2**DRAM_DEPTH_BITS;    // assuming MMIO is also in the .data segment
+
+// Memory-mapped peripheral offsets
+localparam LED_ADDRESS = MMIO_BASE + 32'h00000000;          //WO
+localparam DIP_ADDRESS = MMIO_BASE + 32'h00000004;          //RO
+localparam PB_ADDRESS  = MMIO_BASE + 32'h00000008;          //RO
+localparam CONSOLE_ADDRESS = MMIO_BASE + 32'h0000000C;      //RW
+localparam CONSOLE_IN_valid_ADDRESS = MMIO_BASE + 32'h00000010;     //RO, status bit
+localparam CONSOLE_OUT_ready_ADDRESS = MMIO_BASE + 32'h000000014;   //RO, status bit
+localparam SEVENSEG_ADDRESS = MMIO_BASE + 32'h00000018;     //WO
+                                      
 //----------------------------------------------------------------
 // RV signals
 //----------------------------------------------------------------
 wire[31:0] PC ;
-wire[31:0] Instr ;
-reg[31:0] ReadData ;
+reg [31:0] Instr ;
+reg[31:0] ReadData_in ;
 wire MemRead ;
-wire MemWrite ;
+wire [3:0] MemWrite_out ;
 wire[31:0] ALUResult ;
-wire[31:0] WriteData ;
+wire[31:0] WriteData_out ;
 
 //----------------------------------------------------------------
 // Address Decode signals
 //---------------------------------------------------------------
-wire dec_DATA_CONST, dec_DATA_VAR, dec_LED, dec_DIP, dec_CONSOLE, dec_PB, dec_7SEG, dec_CONSOLE_IN_valid, dec_CONSOLE_OUT_ready;  // 'enable' signals from data memory address decoding
+wire dec_DROM, dec_DRAM, dec_LED, dec_DIP, dec_CONSOLE, dec_PB, dec_SEVENSEG, dec_CONSOLE_IN_valid, dec_CONSOLE_OUT_ready, dec_MMIO;  // 'enable' signals from data memory address decoding
+reg dec_DROM_W, dec_DRAM_W, dec_MMIO_W;  // delayed versions of the decoded signals for output multiplexing
 
 //----------------------------------------------------------------
 // Memory declaration
 //-----------------------------------------------------------------
-reg [31:0] INSTR_MEM		[0:127]; // instruction memory
-reg [31:0] DATA_CONST_MEM	[0:127]; // data (constant) memory
-reg [31:0] DATA_VAR_MEM     [0:127]; // data (variable) memory
+reg [31:0] IROM	[0:2**(IROM_DEPTH_BITS-2)-1];	// instruction memory aka IROM
+reg [31:0] DROM	[0:2**(DROM_DEPTH_BITS-2)-1];	// data (constant) memory aka DROM
+reg [31:0] DRAM	[0:2**(DRAM_DEPTH_BITS-2)-1];	// data (variable) memory aka DRAM
 
 
 //----------------------------------------------------------------
-// Instruction Memory
+// V2: Memory initialisations
 //----------------------------------------------------------------
-reg [8:0] i, j;
 initial begin
-	// TODO: instruction memory goes here. e.g.:INSTR_MEM[0] = 32'hxxxxxxxx;
-	
-// Instruction Memory Initialization
-	INSTR_MEM[0] = 32'h00002497;
-	INSTR_MEM[1] = 32'h40048493;
-	INSTR_MEM[2] = 32'h00002937;
-	INSTR_MEM[3] = 32'h40490913;
-	INSTR_MEM[4] = 32'h00002997;
-	INSTR_MEM[5] = 32'h3f898993;
-	INSTR_MEM[6] = 32'h00002a17;
-	INSTR_MEM[7] = 32'h400a0a13;
-	INSTR_MEM[8] = 32'h00000a93;
-	INSTR_MEM[9] = 32'h00000d13;
-	INSTR_MEM[10] = 32'h00800393;
-	INSTR_MEM[11] = 32'h00100f93;
-	INSTR_MEM[12] = 32'h00000793;
-	INSTR_MEM[13] = 32'h00000813;
-	INSTR_MEM[14] = 32'h00000893;
-	INSTR_MEM[15] = 32'h0009ae83;
-	INSTR_MEM[16] = 32'h004ef613;
-	INSTR_MEM[17] = 32'h002ef693;
-	INSTR_MEM[18] = 32'h001ef713;
-	INSTR_MEM[19] = 32'h000e8a63;
-	INSTR_MEM[20] = 32'h00002d97;
-	INSTR_MEM[21] = 32'hfb4dad83;
-	INSTR_MEM[22] = 32'hfffd8d93;
-	INSTR_MEM[23] = 32'hfe0d9ee3;
-	INSTR_MEM[24] = 32'h00092283;
-	INSTR_MEM[25] = 32'h0ff2f313;
-	INSTR_MEM[26] = 32'h0072de33;
-	INSTR_MEM[27] = 32'h0ffe7e13;
-	INSTR_MEM[28] = 32'h006e7b33;
-	INSTR_MEM[29] = 32'h006e6bb3;
-	INSTR_MEM[30] = 32'h006e0c33;
-	INSTR_MEM[31] = 32'h406e0cb3;
-	INSTR_MEM[32] = 32'h00069463;
-	INSTR_MEM[33] = 32'h0140006f;
-	INSTR_MEM[34] = 32'h00078663;
-	INSTR_MEM[35] = 32'h00000793;
-	INSTR_MEM[36] = 32'h0080006f;
-	INSTR_MEM[37] = 32'h00100793;
-	INSTR_MEM[38] = 32'h00078463;
-	INSTR_MEM[39] = 32'h03c0006f;
-	INSTR_MEM[40] = 32'h000a8663;
-	INSTR_MEM[41] = 32'hfffa8a93;
-	INSTR_MEM[42] = 32'hf95ff06f;
-	INSTR_MEM[43] = 32'h00002a97;
-	INSTR_MEM[44] = 32'hf54aaa83;
-	INSTR_MEM[45] = 32'h000d0a63;
-	INSTR_MEM[46] = 32'h0164a023;
-	INSTR_MEM[47] = 32'h018a2023;
-	INSTR_MEM[48] = 32'h000d7d33;
-	INSTR_MEM[49] = 32'hf79ff06f;
-	INSTR_MEM[50] = 32'h0174a023;
-	INSTR_MEM[51] = 32'h019a2023;
-	INSTR_MEM[52] = 32'h00100d13;
-	INSTR_MEM[53] = 32'hf69ff06f;
-	INSTR_MEM[54] = 32'h01980663;
-	INSTR_MEM[55] = 32'h01900833;
-	INSTR_MEM[56] = 32'h019008b3;
-	INSTR_MEM[57] = 32'h0004a023;
-	INSTR_MEM[58] = 32'h011a2023;
-	INSTR_MEM[59] = 32'h00061663;
-	INSTR_MEM[60] = 32'h00071863;
-	INSTR_MEM[61] = 32'hf49ff06f;
-	INSTR_MEM[62] = 32'h01f898b3;
-	INSTR_MEM[63] = 32'hf41ff06f;
-	INSTR_MEM[64] = 32'h41f8d8b3;
-	INSTR_MEM[65] = 32'hf39ff06f;
-	for (i = 66; i < 128; i = i + 1) begin
-		INSTR_MEM[i] = 32'h0;
+// Make sure that IROM.mem and DROM.mem (hexadecimal text memory dump from RARS - name it with .mem extension) are added to the project as 'Design Sources'. Alternatively, specify the full path.
+// If you checked "Copy sources into project", make sure that subsequent dumps from RARS are to projectName/projectName.srcs/sources_1/imports/orignalSourceFolderName 
+// "Copy sources into project" might be a bad idea. RARS does not remember the last opened folder, so keep it in a folder that is easier to access.
+	// IMP: "Relaunch Simulation" (top menu broken clock-wise button) may not be enough if you change your .mem file. Do SIMULATION > Run Simulation > Run Behavioural Simulation. In simulation, check the memory contents under test_Wrapper>dut (Wrapper)> IROM (and other memories) if unsure the correct contents are used.
+// If you click Generate Bitstream after updating the .mem file, Vivado does not rerun synthesis using the new file, as it does not know that the file was modified externally. Rerun the synthesis and then bitstream generation though Vivado says it is up to date. 
+$readmemh("IROM.mem", IROM);
+$readmemh("DROM.mem", DROM);	// This will generate a warning of having more than necessary data as the assembler dumps the entire data segment including DROM and MMIO,
+								// This is ok as only the first part of it will be used to initialize DROM.
+// DRAM should not be initalized. Initialization works for RAMs in FPGAs, but not for standard RAMs. You must store before you can load.
+end
+
+//----------------------------------------------------------------
+// Memory and Peripheral outputs to be multiplexed
+//----------------------------------------------------------------
+reg [31:0] ReadData_DROM ;
+reg [31:0] ReadData_DRAM ;
+reg [31:0] ReadData_MMIO ;
+
+//----------------------------------------------------------------
+// Data memory address decoding
+//----------------------------------------------------------------
+//assign dec_DROM		= (ALUResult >= DROM_BASE && ALUResult <= DROM_BASE+2**DROM_DEPTH_BITS-1) ? 1'b1 : 1'b0;
+//The assignment above works too instead of the one below. Probably synthesizes to the same thing.
+assign dec_DROM			= (ALUResult[31:DROM_DEPTH_BITS] == DROM_BASE[31:DROM_DEPTH_BITS]) ? 1'b1 : 1'b0;
+assign dec_DRAM			= (ALUResult[31:DRAM_DEPTH_BITS] == DRAM_BASE[31:DRAM_DEPTH_BITS]) ? 1'b1 : 1'b0;
+assign dec_LED			= (ALUResult == LED_ADDRESS) ? 1'b1 : 1'b0;
+assign dec_DIP			= (ALUResult == DIP_ADDRESS) ? 1'b1 : 1'b0;
+assign dec_PB 		   	= (ALUResult == PB_ADDRESS) ? 1'b1 : 1'b0;
+assign dec_CONSOLE	   	= (ALUResult == CONSOLE_ADDRESS) ? 1'b1 : 1'b0;
+assign dec_CONSOLE_IN_valid	= (ALUResult == CONSOLE_IN_valid_ADDRESS) ? 1'b1 : 1'b0;
+assign dec_CONSOLE_OUT_ready= (ALUResult == CONSOLE_OUT_ready_ADDRESS) ? 1'b1 : 1'b0;
+assign dec_SEVENSEG	    	= (ALUResult[31:2] == SEVENSEG_ADDRESS[31:2]) ? 1'b1 : 1'b0;
+assign dec_MMIO         = dec_CONSOLE || dec_CONSOLE_IN_valid || dec_CONSOLE_OUT_ready || dec_PB || dec_DIP;
+
+//----------------------------------------------------------------
+// Input (into RV) multiplexing
+//----------------------------------------------------------------
+always@( * ) begin
+if (dec_DROM_W)
+	ReadData_in <= ReadData_DROM ; 
+else if (dec_DRAM_W)
+	ReadData_in <= ReadData_DRAM ;
+else if (dec_MMIO_W)
+	ReadData_in <= ReadData_MMIO ; 	
+else
+	ReadData_in <= 32'h0 ;
+end
+
+//----------------------------------------------------------------
+// DRAM write
+//----------------------------------------------------------------
+localparam NUM_COL = 4;
+localparam COL_WIDTH = 8;
+integer i;
+always@(posedge CLK) begin
+	if( MemWrite_out[3] || MemWrite_out[2] || MemWrite_out[1] || MemWrite_out[0] ) begin
+		for(i=0;i<NUM_COL;i=i+1) begin
+			if(MemWrite_out[i]) begin
+				if( dec_DRAM ) begin
+					DRAM[ALUResult[DROM_DEPTH_BITS-1:2]][i*COL_WIDTH +: COL_WIDTH] <= WriteData_out[i*COL_WIDTH +: COL_WIDTH];
+				end		      
+			end
+		end
+	end
+    // ReadData_DRAM <= DRAM[ALUResult[DRAM_DEPTH_BITS-1:2]] ; //Uncomment only if only using synch read for memory
+end
+
+//----------------------------------------------------------------
+// Asych DRAM read - //Uncomment the following block (3 lines) if NOT using synch read for memory
+//----------------------------------------------------------------
+always@( * ) begin 
+    ReadData_DRAM <= DRAM[ALUResult[DRAM_DEPTH_BITS-1:2]] ; // async read
+end
+
+//----------------------------------------------------------------
+// IROM read
+//----------------------------------------------------------------
+always@( * ) begin // @posedge CLK only if using synch read for memory
+    Instr = ( ( PC[31:IROM_DEPTH_BITS] == IROM_BASE[31:IROM_DEPTH_BITS]) && // To check if address is in the valid range
+	     (PC[1:0] == 2'b00) )? // and is word-aligned - we do not support instruction sizes other than 32.
+                 IROM[PC[IROM_DEPTH_BITS-1:2]] : 32'h00000013 ; // If the address is invalid, the instruction fetched is NOP. 
+                 						// This can be changed to trigger an exception instead if need be.
+end
+
+//----------------------------------------------------------------
+// DROM read
+//----------------------------------------------------------------
+always@( * ) begin // @posedge CLK only if using synch read for memory
+    ReadData_DROM <= DROM[ALUResult[DROM_DEPTH_BITS-1:2]] ;
+end
+
+//----------------------------------------------------------------
+// MMIO read
+//----------------------------------------------------------------
+always@( * ) begin // @posedge CLK only if using synch read for memory
+if (dec_DIP)
+	ReadData_MMIO <= { {31-N_DIPs+1{1'b0}}, DIP } ; 
+else if (dec_PB)
+	ReadData_MMIO <= { {31-N_PBs+1{1'b0}}, PB } ; 
+else if (dec_CONSOLE && CONSOLE_IN_valid)
+	ReadData_MMIO <= {24'b0, CONSOLE_IN};
+else if (dec_CONSOLE_IN_valid)
+	ReadData_MMIO <= {31'b0, CONSOLE_IN_valid};	
+else if (dec_CONSOLE_OUT_ready)
+	ReadData_MMIO <= {31'b0, CONSOLE_OUT_ready};		
+else
+	ReadData_MMIO <= 32'h0 ;
+end
+
+//----------------------------------------------------------------
+// Delaying the decoded signals for multiplexing (delay only if using synch read for memory)
+//----------------------------------------------------------------
+always@( * ) begin // @posedge CLK only if using synch read for memory
+    dec_DROM_W <= dec_DROM;
+    dec_DRAM_W <= dec_DRAM;
+    dec_MMIO_W <= dec_MMIO;
+end
+
+//----------------------------------------------------------------
+// SevenSeg write
+//----------------------------------------------------------------
+integer j;
+always@(posedge CLK) begin
+	if( MemWrite_out[3] || MemWrite_out[2] || MemWrite_out[1] || MemWrite_out[0] ) begin
+		for(j=0;j<NUM_COL;j=j+1) begin
+			if(MemWrite_out[j]) begin
+				if (RESET)
+					SEVENSEGHEX <= 32'b0;
+				else if (dec_SEVENSEG)
+					SEVENSEGHEX[j*COL_WIDTH +: COL_WIDTH] <= WriteData_out[j*COL_WIDTH +: COL_WIDTH];		      
+			end
+		end
 	end
 end
 
 //----------------------------------------------------------------
-// Data (Constant) Memory
+// Memory-mapped LED write
 //----------------------------------------------------------------
-initial begin
-	// TODO: instruction memory goes here. e.g.:DATA_CONST_MEM[0] = 32'hxxxxxxxx;
-	DATA_CONST_MEM[0] = 32'h00002422;
-	DATA_CONST_MEM[1] = 32'h0000ffff;
-	for (i = 2; i < 128; i = i + 1) begin
-		DATA_CONST_MEM[i] = 32'h0;
+always@(posedge CLK) begin
+    if(RESET)
+        LED_OUT <= 0 ;
+    else if( MemWrite_out[0] && dec_LED ) 
+        LED_OUT <= WriteData_out[N_LEDs_OUT-1 : 0] ;
+end
+
+//----------------------------------------------------------------
+// Console read / write
+//----------------------------------------------------------------
+always @(posedge CLK) begin
+	CONSOLE_OUT_valid <= 1'b0;
+	CONSOLE_IN_ack <= 1'b0;
+	if (MemWrite_out[0] && dec_CONSOLE && CONSOLE_OUT_ready)
+	begin
+		CONSOLE_OUT <= WriteData_out[7:0];
+		CONSOLE_OUT_valid <= 1'b1;
 	end
+	if (MemRead && dec_CONSOLE && CONSOLE_IN_valid)
+		CONSOLE_IN_ack <= 1'b1;
 end
-
-
-//----------------------------------------------------------------
-// Data (Variable) Memory
-//----------------------------------------------------------------
-initial begin
-end
+// Possible spurious CONSOLE_IN_ack and a lost character if we don't have a MemRead signal. 
+// Alternatively, make sure ALUResult is never the address of UART other than when accessing it.
+// Also, the character received from the PC in the CLK cycle immediately following a character read by the processor is lost. 
+	// This is not that much of a problem in practice though (need to check if it still exists after adding MemRead).
 
 //----------------------------------------------------------------
 // Debug LEDs
@@ -200,102 +330,16 @@ assign LED_PC = PC[15-N_LEDs_OUT+1 : 2]; // debug showing PC
 //----------------------------------------------------------------
 // RV port map
 //----------------------------------------------------------------
-RV IRV1(
+RV RV1(
 	.CLK(CLK),
 	.RESET(RESET),
 	.Instr(Instr),
-	.ReadData(ReadData),
+	.ReadData_in(ReadData_in),
 	.MemRead(MemRead),
-	.MemWrite(MemWrite),
+	.MemWrite_out(MemWrite_out),
 	.PC(PC),
 	.ALUResult(ALUResult),
-	.WriteData(WriteData)
+	.WriteData_out(WriteData_out)
 );
-
-//----------------------------------------------------------------
-// Data memory address decoding
-//----------------------------------------------------------------
-assign dec_DATA_CONST		= (ALUResult >= 32'h00002000 && ALUResult <= 32'h000021FC) ? 1'b1 : 1'b0;
-assign dec_DATA_VAR			= (ALUResult >= 32'h00002200 && ALUResult <= 32'h000023FC) ? 1'b1 : 1'b0;
-assign dec_LED				= (ALUResult == 32'h00002400) ? 1'b1 : 1'b0;
-assign dec_DIP				= (ALUResult == 32'h00002404) ? 1'b1 : 1'b0;
-assign dec_PB 		   		= (ALUResult == 32'h00002408) ? 1'b1 : 1'b0;
-assign dec_CONSOLE	   		= (ALUResult == 32'h0000240C) ? 1'b1 : 1'b0;
-assign dec_CONSOLE_IN_valid	= (ALUResult == 32'h00002410) ? 1'b1 : 1'b0;
-assign dec_CONSOLE_OUT_ready= (ALUResult == 32'h00002414) ? 1'b1 : 1'b0;
-assign dec_7SEG	    		= (ALUResult == 32'h00002418) ? 1'b1 : 1'b0;
-
-//----------------------------------------------------------------
-// Data memory read
-//----------------------------------------------------------------
-always@( * ) begin
-if (dec_DIP)
-	ReadData <= { {31-N_DIPs+1{1'b0}}, DIP } ; 
-else if (dec_PB)
-	ReadData <= { {31-N_PBs+1{1'b0}}, PB } ; 
-else if (dec_DATA_VAR)
-	ReadData <= DATA_VAR_MEM[ALUResult[8:2]] ; 
-else if (dec_DATA_CONST)
-	ReadData <= DATA_CONST_MEM[ALUResult[8:2]] ; 
-else if (dec_CONSOLE && CONSOLE_IN_valid)
-	ReadData <= {24'b0, CONSOLE_IN};
-else if (dec_CONSOLE_IN_valid)
-	ReadData <= {31'b0, CONSOLE_IN_valid};	
-else if (dec_CONSOLE_OUT_ready)
-	ReadData <= {31'b0, CONSOLE_OUT_ready};		
-else
-	ReadData <= 32'h0 ; 
-end
-			
-//----------------------------------------------------------------
-// Instruction memory read
-//----------------------------------------------------------------
-assign Instr = ( (PC >= 32'h00000000) && (PC <= 32'h000001FC) ) ? // To check if address is in the valid range, assuming 128 word memory. Also helps minimize warnings
-                 INSTR_MEM[PC[8:2]] : 32'h00000000 ; 
-
-//----------------------------------------------------------------
-// Console read / write
-//----------------------------------------------------------------
-always @(posedge CLK) begin
-	CONSOLE_OUT_valid <= 1'b0;
-	CONSOLE_IN_ack <= 1'b0;
-	if (MemWrite && dec_CONSOLE && CONSOLE_OUT_ready)
-	begin
-		CONSOLE_OUT <= WriteData[7:0];
-		CONSOLE_OUT_valid <= 1'b1;
-	end
-	if (MemRead && dec_CONSOLE && CONSOLE_IN_valid)
-		CONSOLE_IN_ack <= 1'b1;
-end
-// Possible spurious CONSOLE_IN_ack and a lost character if we don't have a MemRead signal. ALternatively, make sure ALUResult is never the address of UART other than when accessing it.
-// Also, the character received from PC in the CLK cycle immediately following a character read by the processor is lost. This is not that much of a problem in practice though.
-
-//----------------------------------------------------------------
-// Data Memory-mapped LED write
-//----------------------------------------------------------------
-always@(posedge CLK) begin
-    if(RESET)
-        LED_OUT <= 0 ;
-    else if( MemWrite && dec_LED ) 
-        LED_OUT <= WriteData[N_LEDs_OUT-1 : 0] ;
-end
-
-//----------------------------------------------------------------
-// SevenSeg LED Display write
-//----------------------------------------------------------------
-always @(posedge CLK) begin
-	if (RESET)
-		SEVENSEGHEX <= 32'b0;
-	else if (MemWrite && dec_7SEG)
-		SEVENSEGHEX <= WriteData;
-end
-
-//----------------------------------------------------------------
-// Data Memory write
-//----------------------------------------------------------------
-always@(posedge CLK) begin
-    if( MemWrite && dec_DATA_VAR ) 
-        DATA_VAR_MEM[ALUResult[8:2]] <= WriteData ;
-end
 
 endmodule
