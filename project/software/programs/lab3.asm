@@ -26,6 +26,7 @@ main: # Initialise all variables
     la s8, CONSOLE_OUT_ready
     la s9, CONSOLE_IN_valid
     la s10, CONSOLE
+    la s11, SEVENSEG
     li a0, 0                    # X1 Coordinate
     li a1, 0                    # Y1 Coordinate
     li a2, 0                    # X2 Coordinate
@@ -160,6 +161,8 @@ M2:
     mul t0, a0, a4              # t0 = X1 * Gradient
     beq a6, zero, Y_INTER       # Check gradient sign
     sub t0, zero, t0            # negative: negate t0
+    # HACK:
+    sw a6, (s11)		        # show received character (ASCII) on the 7-Seg display
 Y_INTER:
     sub a5, a1, t0              # y_int = Y1 - t0
 
@@ -187,6 +190,8 @@ NEXT_CHAR_RES:
     jal PRINT_RES               # repeat word print
 
 CONTINUE:
+    # HACK:
+    sw a5, (s11)		        # show received character (ASCII) on the 7-Seg display
     beqz a6, CONTINUE_1         # if gradient is positive, no need print sign
     lw t3, (s8)                 # Check if console is ready
     beqz t3, CONTINUE           # Not ready, continue waiting
