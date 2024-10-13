@@ -50,17 +50,19 @@ module test_MCycle(
     wire Busy ;
     
     // INSTANTIATE DEVICE/UNIT UNDER TEST (DUT/UUT)
-    MCycle dut( 
-        CLK, 
-        RESET, 
-        Start, 
-        MCycleOp, 
-        Operand1, 
-        Operand2, 
-        Result1, 
-        Result2, 
-        Busy
-        ) ;
+    MCycle #(
+        .width(4)
+    ) dut ( 
+        .CLK(CLK), 
+        .RESET(RESET), 
+        .Start(Start), 
+        .MCycleOp(MCycleOp), 
+        .Operand1(Operand1), 
+        .Operand2(Operand2), 
+        .MCycle_Result1(Result1), 
+        .MCycle_Result2(Result2), 
+        .Busy(Busy)
+    );
     
     // STIMULI
     initial begin
