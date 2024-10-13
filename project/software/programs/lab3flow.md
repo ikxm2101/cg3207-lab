@@ -29,13 +29,13 @@
 | s1   | flag for Y-line (ie. y1 == y2)             | 0             |
 | s2   | Value of '0' in ASCII                      | 48            |
 | s3   | Value of 10 for multiplier                 | 10            |
-| s4   | Value of '\r'                              |               |
+| s4   | Value of '\r'                              | 13            |
 | s5   | SIGN_MASK                                  | 0x80000000    |
 | s6   | LSB_MASK                                   | 0xFF          |
-| s7   | LEDS                                       |               |
-| s8   | CONSOLE_OUT_ready                          |               |
-| s9   | CONSOLE_IN_valid                           |               |
-| s10  | CONSOLE                                    |               |
+| s7   | LEDS                                       | 0x00002400    |
+| s8   | CONSOLE_OUT_ready                          | 0x00002414    |
+| s9   | CONSOLE_IN_valid                           | 0x00002410    |
+| s10  | CONSOLE                                    | 0x00002418    |
 | a0   | X1 Coordinate                              | 0             |
 | a1   | Y1 Coordinate                              | 0             |
 | a2   | X2 Coordinate                              | 0             |
