@@ -162,7 +162,7 @@ M2:
     beq a6, zero, Y_INTER       # Check gradient sign
     sub t0, zero, t0            # negative: negate t0
     # HACK:
-    sw a6, (s11)		        # show received character (ASCII) on the 7-Seg display
+    sw a4, (s11)		        # show received character (ASCII) on the 7-Seg display
 Y_INTER:
     sub a5, a1, t0              # y_int = Y1 - t0
 
