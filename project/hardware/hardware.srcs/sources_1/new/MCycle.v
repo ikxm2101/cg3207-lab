@@ -62,6 +62,8 @@ module MCycle #(
     reg [2*width-1:0] shifted_op2 = 0 ;   
     reg result_sign = 0; // 0: positive, 1: negative  
 
+    // For Booth's algorithm
+
     always@( state, done, Start, RESET ) begin : IDLE_PROCESS  
 		// Note : This block uses non-blocking assignments to get around an unpredictable Verilog simulation behaviour.
         // default outputs
@@ -98,18 +100,23 @@ module MCycle #(
             count = 0 ;
             temp_sum = 0 ;
             result_sign = 0;
-            shifted_op1 = { {width{~MCycleOp[0] & Operand1[width-1]}}, Operand1 } ; // sign extend the operands  
+
+            /* sign extend the operands 
+             * signed: sign extend by msb
+             * unsigned: sign extend by zero
+            */
+            shifted_op1 = { {width{~MCycleOp[0] & Operand1[width-1]}}, Operand1 } ;   
             shifted_op2 = { {width{~MCycleOp[0] & Operand2[width-1]}}, Operand2 } ; 
             
             if (MCycleOp == 2'b10) begin // Signed Division
                 result_sign = shifted_op1[width-1] ^ shifted_op2[width-1]; // Store result sign
 
                 if (shifted_op1[width-1]) begin
-                    shifted_op1 = ~shifted_op1 + 1; // Changed to unsigned 
+                    shifted_op1 = ~shifted_op1 + 1; // Changed to unsigned (2's complement)
                 end
 
                 if (shifted_op2[width-1]) begin
-                    shifted_op2 = ~shifted_op2 + 1; // Changed to unsigned
+                    shifted_op2 = ~shifted_op2 + 1; // Changed to unsigned (2's complement)
                 end
             end
 
@@ -122,6 +129,8 @@ module MCycle #(
         if( ~MCycleOp[1] ) begin // Multiply
             // if( ~MCycleOp[0] ), takes 2*'width' cycles to execute, returns signed(Operand1)*signed(Operand2)
             // if( MCycleOp[0] ), takes 'width' cycles to execute, returns unsigned(Operand1)*unsigned(Operand2)        
+            
+            /* Inefficient multiplier */
             if( shifted_op2[0] ) // add only if b0 = 1
                 temp_sum = temp_sum + shifted_op1 ; // partial product for multiplication
                 
@@ -133,6 +142,60 @@ module MCycle #(
                 done <= 1'b1 ;   
                
             count = count + 1;    
+            
+            /* Booth's algorithm
+
+                ! ...0111...111110...
+                !     ^         ^
+                !     |         |
+                ! 2^m       2^k
+
+                ! 2^m + 2^(m-1) + 2^(m-2) + ... + 2^(k+1) + 2^k
+
+                ! Proof
+
+                ! Sum of geometric series:
+                ! S = 2^k + 2^(k+1) + ... + 2^(m-1) + 2^m
+                ! Multiply both sides by 2:
+                ! 2S = 2^(k+1) + 2^(k+2) + ... + 2^m + 2^(m+1)
+                ! Subtract S from 2S:
+                ! S = 2^(m+1) - 2^k
+
+            * Principle of operation:
+             * 1. Strings of 0’s in the multiplier require no addition but just shifting and 
+             * 2. a string of 1’s in the multiplier from bit weight 2^m to weight 2^k can be treated as 2^(m+1) to 2^k.
+            
+            
+            * 3 cases:
+            * 1. Subtracting on First 1 in a String of 1's (- 2^k):
+                * When we encounter a '1' after a '0', it marks the start of a string of 1's.
+                * We subtract the multiplicand from the partial product here.
+                * This is equivalent to adding the negative of the multiplicand, setting up for the efficient handling of the string of 1's.
+
+
+            * 2. Adding on First 0 After a String of 1's (2^m+1): 
+                * When we encounter a '0' after a '1', it marks the end of a string of 1's.
+                * We add the multiplicand to the partial product here.
+                * This completes the operation of treating the string of 1's as 2^(m+1) - 2^k.
+
+
+            * 3. No Change for Identical Bits:
+                * When the current bit is the same as the previous bit (00 or 11), we don't modify the partial product.
+                * This efficiently handles consecutive 0's or the middle of a string of 1's.
+            
+            * Implemenetaion:
+              *  00 or 11: Shift right (A, Q, Q-1)
+              *  01: Add Multiplicand to Accumulator, then shift right (A, Q, Q-1)
+              *  10: Subtract Multiplicand from Accumulator, then shift right (A, Q, Q-1)
+             */
+
+            // case (shifted_op2[1:0]) // Check the last two bits of the multiplier
+            //     2'b01: temp_sum = temp_sum + shifted_op1; // Add multiplicand to accumulator
+            //     2'b10: temp_sum = temp_sum - shifted_op1; // Subtract multiplicand from accumulator
+            //     default: ; // Do nothing for 2'b00 and 2'b11
+            // endcase
+
+            
         end    
         else begin // Supposed to be Divide. Change this to signed [ if(~MCycleOp[0]) ] and unsigned [ if(MCycleOp[0]) ] division.
 
