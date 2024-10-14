@@ -1,209 +1,208 @@
-Address     Code        Basic                        Line Source
-
-0x00000000  0x80000ab7  lui x21,0xfff80000           23       li s5, 0x80000000
-0x00000004  0x000a8a93  addi x21,x21,0                    
-0x00000008  0x0ff00b13  addi x22,x0,0x000000ff       24       li s6, 0xFF
-0x0000000c  0x00002b97  auipc x23,2                  25       la s7, LEDS
-0x00000010  0x3f4b8b93  addi x23,x23,0x000003f4           
-0x00000014  0x00002c17  auipc x24,2                  26       la s8, CONSOLE_OUT_ready
-0x00000018  0x400c0c13  addi x24,x24,0x00000400           
-0x0000001c  0x00002c97  auipc x25,2                  27       la s9, CONSOLE_IN_valid
-0x00000020  0x3f4c8c93  addi x25,x25,0x000003f4           
-0x00000024  0x00002d17  auipc x26,2                  28       la s10, CONSOLE
-0x00000028  0x3e8d0d13  addi x26,x26,0x000003e8           
-0x0000002c  0x00002d97  auipc x27,2                  29       la s11, SEVENSEG
-0x00000030  0x3ecd8d93  addi x27,x27,0x000003ec           
-0x00000034  0x00000513  addi x10,x0,0                30       li a0, 0                    # X1 Coordinate
-0x00000038  0x00000593  addi x11,x0,0                31       li a1, 0                    # Y1 Coordinate
-0x0000003c  0x00000613  addi x12,x0,0                32       li a2, 0                    # X2 Coordinate
-0x00000040  0x00000693  addi x13,x0,0                33       li a3, 0                    # Y2 Coordinate
-0x00000044  0x00000713  addi x14,x0,0                34       li a4, 0                    # Gradient (Magnitude)
-0x00000048  0x00000793  addi x15,x0,0                35       li a5, 0                    # Intercept
-0x0000004c  0x00000813  addi x16,x0,0                36       li a6, 0                    # Gradient (Sign)
-0x00000050  0x00000493  addi x9,x0,0                 37       li s1, 0                    # flag for Y-line (ie. y1 == y2)
-0x00000054  0x03000913  addi x18,x0,0x00000030       38       li s2, 48                   # value of 0 in ASCII
-0x00000058  0x00a00993  addi x19,x0,10               39       li s3, 10                   # value of 10 for multiplier
-0x0000005c  0x00d00a13  addi x20,x0,13               40       li s4, '\r'                 # value of '\r'
-0x00000060  0x00002e97  auipc x29,2                  43       la t4, welcome_string
-0x00000064  0xfb0e8e93  addi x29,x29,0xffffffb0           
-0x00000068  0x000ea283  lw x5,0(x29)                 45   	lw t0, (t4)		    # load the word (4 characters) to be displayed
-0x0000006c  0x00400393  addi x7,x0,4                 46   	li t2, 4		    # byte counter
-0x00000070  0x000c2303  lw x6,0(x24)                 48   	lw t1, (s8)		        # check if CONSOLE is ready to send a new character
-0x00000074  0xfe030ee3  beq x6,x0,0xfffffffc         49   	beqz t1, NEXT_CHAR_WEL	# not ready, continue waiting
-0x00000078  0x0162f333  and x6,x5,x22                50   	and t1, t0, s6 		    # apply LSB_MASK to get the least sig byte
-0x0000007c  0x00030e63  beq x6,x0,0x0000001c         51   	beqz t1, WAIT_X1 	    # null terminator ('\0') detected, go to X1
-0x00000080  0x006d2023  sw x6,0(x26)                 52   	sw t1, (s10) 		    # write to UART the Byte(4-t2) of the original word (composed of 4 characters) in (7:0) of the word to be written (remember, we can only write words)
-0x00000084  0x0082d293  srli x5,x5,8                 53   	srli t0, t0, 8	 	    # shift so that the next character comes into LSB
-0x00000088  0xfff38393  addi x7,x7,0xffffffff        54   	addi t2, t2, -1		    # decrement the loop counter
-0x0000008c  0xfe0392e3  bne x7,x0,0xffffffe4         55   	bnez t2, NEXT_CHAR_WEL	# check and print the next character in the word
-0x00000090  0x004e8e93  addi x29,x29,4               56   	addi t4, t4, 4		    # point to next word (4 characters)
-0x00000094  0xfd5ff0ef  jal x1,0xffffffd4            57   	jal PRINT_WEL           # Jump back to printing
-0x00000098  0x000ca303  lw x6,0(x25)                 61       lw t1, (s9)                 # Read new character flag
-0x0000009c  0xfe030ee3  beq x6,x0,0xfffffffc         62       beq t1, zero, WAIT_X1       # Not ready, continue waiting.
-0x000000a0  0x000d2283  lw x5,0(x26)                 63       lw t0, (s10)                # Read UART
-0x000000a4  0x0162f2b3  and x5,x5,x22                64       and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
-0x000000a8  0x01428a63  beq x5,x20,0x00000014        65       beq t0, s4, WAIT_Y1         # '\r' received, goto to WAIT_Y1
-0x000000ac  0x03350533  mul x10,x10,x19              68       mul a0, a0, s3              # Make space for ones position                     
-0x000000b0  0x412282b3  sub x5,x5,x18                69       sub t0, t0, s2              # integer = input - '0'
-0x000000b4  0x00550533  add x10,x10,x5               70       add a0, a0, t0              # a0 = a0 + integer
-0x000000b8  0xfe1ff0ef  jal x1,0xffffffe0            71       jal WAIT_X1                 # jump back to receive next character
-0x000000bc  0x000ca303  lw x6,0(x25)                 74       lw t1, (s9)                 # Read new character flag
-0x000000c0  0xfe030ee3  beq x6,x0,0xfffffffc         75       beq t1, zero, WAIT_Y1       # Not ready, continue waiting.
-0x000000c4  0x000d2283  lw x5,0(x26)                 76       lw t0, (s10)                # Read UART
-0x000000c8  0x0162f2b3  and x5,x5,x22                77       and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
-0x000000cc  0x01428a63  beq x5,x20,0x00000014        78       beq t0, s4, WAIT_X2         # '\r' received, goto to WAIT_X2
-0x000000d0  0x033585b3  mul x11,x11,x19              81       mul a1, a1, s3              # Make space for ones position                     
-0x000000d4  0x412282b3  sub x5,x5,x18                82       sub t0, t0, s2              # integer = input - '0'
-0x000000d8  0x005585b3  add x11,x11,x5               83       add a1, a1, t0              # a1 = a1 + integer
-0x000000dc  0xfe1ff0ef  jal x1,0xffffffe0            84       jal WAIT_Y1                 # jump back to receive next character
-0x000000e0  0x000ca303  lw x6,0(x25)                 87       lw t1, (s9)                 # Read new character flag
-0x000000e4  0xfe030ee3  beq x6,x0,0xfffffffc         88       beq t1, zero, WAIT_X2       # Not ready, continue waiting.
-0x000000e8  0x000d2283  lw x5,0(x26)                 89       lw t0, (s10)                # Read UART
-0x000000ec  0x0162f2b3  and x5,x5,x22                90       and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
-0x000000f0  0x01428a63  beq x5,x20,0x00000014        91       beq t0, s4, WAIT_Y2         # '\r' received, goto to WAIT_Y2
-0x000000f4  0x03360633  mul x12,x12,x19              94       mul a2, a2, s3              # Make space for ones position                     
-0x000000f8  0x412282b3  sub x5,x5,x18                95       sub t0, t0, s2              # integer = input - '0'
-0x000000fc  0x00560633  add x12,x12,x5               96       add a2, a2, t0              # a2 = a2 + integer
-0x00000100  0xfe1ff0ef  jal x1,0xffffffe0            97       jal WAIT_X2                 # jump back to receive next character
-0x00000104  0x000ca303  lw x6,0(x25)                 100      lw t1, (s9)                 # Read new character flag
-0x00000108  0xfe030ee3  beq x6,x0,0xfffffffc         101      beq t1, zero, WAIT_Y2       # Not ready, continue waiting.
-0x0000010c  0x000d2283  lw x5,0(x26)                 102      lw t0, (s10)                # Read UART
-0x00000110  0x0162f2b3  and x5,x5,x22                103      and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
-0x00000114  0x01428a63  beq x5,x20,0x00000014        104      beq t0, s4, CALC            # '\r' received, goto to CALC
-0x00000118  0x033686b3  mul x13,x13,x19              107      mul a3, a3, s3              # Make space for ones position                     
-0x0000011c  0x412282b3  sub x5,x5,x18                108      sub t0, t0, s2              # integer = input - '0'
-0x00000120  0x005686b3  add x13,x13,x5               109      add a3, a3, t0              # a3 = a3 + integer
-0x00000124  0xfe1ff0ef  jal x1,0xffffffe0            110      jal WAIT_Y2                 # jump back to receive next character
-0x00000128  0x1cc50e63  beq x10,x12,0x000001dc       115      beq a0, a2, INVALID_M_INF   # x1 and x2 same, m is infinite
-0x0000012c  0x40c502b3  sub x5,x10,x12               116      sub t0, a0, a2              # x1 - x2
-0x00000130  0x0152f333  and x6,x5,x21                117      and t1, t0, s5              # Apply SIGN MASK
-0x00000134  0x00000e13  addi x28,x0,0                118      li t3, 0                    # 0 == X1 > X2      
-0x00000138  0x00030463  beq x6,x0,0x00000008         119      beqz t1, CHECK_Y            # t1 == 0, X1 > X2
-0x0000013c  0x00100e13  addi x28,x0,1                120      li t3, 1                    # 1 == X2 > x1
-0x00000140  0x40d582b3  sub x5,x11,x13               123      sub t0, a1, a3              # y1 - y2 
-0x00000144  0x00100493  addi x9,x0,1                 124      li s1, 1                    # Set Y1 == Y2 flag
-0x00000148  0x08028663  beq x5,x0,0x0000008c         125      beqz t0, M_ZERO             # If Y1 == Y2, then immediately print out
-0x0000014c  0x00000493  addi x9,x0,0                 126      li s1, 0                    # Reset Y1 == Y2 flag
-0x00000150  0x0152f333  and x6,x5,x21                127      and t1, t0, s5              # Apply SIGN MASK
-0x00000154  0x00000e93  addi x29,x0,0                128      li t4, 0                    # 0 == Y1 > Y2
-0x00000158  0x00030463  beq x6,x0,0x00000008         129      beqz t1, CHECK_M            # t1 == 0, Y1 > Y2
-0x0000015c  0x00100e93  addi x29,x0,1                130      li t4, 1                    # 1 == Y2 > Y1
-0x00000160  0x00000813  addi x16,x0,0                133      li a6, 0                    # Set gradient sign to pos 
-0x00000164  0x01de0463  beq x28,x29,0x00000008       134      beq t3, t4, CALC_M          # Gradient positive
-0x00000168  0x00100813  addi x16,x0,1                135      li a6, 1                    # Set gradient sign to neg
-0x0000016c  0x00050c33  add x24,x10,x0               138      add s8, a0, zero            # Temp value for X1
-0x00000170  0x00058cb3  add x25,x11,x0               139      add s9, a1, zero            # Temp value for Y1
-0x00000174  0x00060d33  add x26,x12,x0               140      add s10, a2, zero           # Temp value for X2
-0x00000178  0x00068db3  add x27,x13,x0               141      add s11, a3, zero           # Temp value for Y2
-0x0000017c  0x000e0863  beq x28,x0,0x00000010        143      beqz t3, M1                 # if X1 > X2 go to M1
-0x00000180  0x000c02b3  add x5,x24,x0                145      add t0, s8, zero            # t0 = s8 (X1)
-0x00000184  0x000d0c33  add x24,x26,x0               146      add s8, s10, zero           # s8 = s10 (X2)
-0x00000188  0x00028d33  add x26,x5,x0                147      add s10, t0, zero           # s10 = t0 (X1)
-0x0000018c  0x000e8863  beq x29,x0,0x00000010        150      beqz t4, M2                 # if Y1 > Y2, go to M2
-0x00000190  0x000c82b3  add x5,x25,x0                152      add t0, s9, zero            # t0 = s9 (Y1)
-0x00000194  0x000d8cb3  add x25,x27,x0               153      add s9, s11, zero           # s9 = s11 (Y2) 
-0x00000198  0x00028db3  add x27,x5,x0                154      add s11, t0, zero           # s11 = t0 (Y1)
-0x0000019c  0x41ac02b3  sub x5,x24,x26               157      sub t0, s8, s10             # t0 = delta of X
-0x000001a0  0x41bc8333  sub x6,x25,x27               158      sub t1, s9, s11             # t1 = delta of Y
-0x000001a4  0x02535733  divu x14,x6,x5               159      divu a4, t1, t0             # a4 = t1 / t0
-0x000001a8  0x02e502b3  mul x5,x10,x14               161      mul t0, a0, a4              # t0 = X1 * Gradient
-0x000001ac  0x00080663  beq x16,x0,0x0000000c        162      beq a6, zero, Y_INTER       # Check gradient sign
-0x000001b0  0x405002b3  sub x5,x0,x5                 163      sub t0, zero, t0            # negative: negate t0
-0x000001b4  0x00eda023  sw x14,0(x27)                165      sw a4, (s11)		        # show received character (ASCII) on the 7-Seg display
-0x000001b8  0x405587b3  sub x15,x11,x5               167      sub a5, a1, t0              # y_int = Y1 - t0
-0x000001bc  0x00002c17  auipc x24,2                  170      la s8, CONSOLE_OUT_ready
-0x000001c0  0x258c0c13  addi x24,x24,0x00000258           
-0x000001c4  0x00002c97  auipc x25,2                  171      la s9, CONSOLE_IN_valid
-0x000001c8  0x24cc8c93  addi x25,x25,0x0000024c           
-0x000001cc  0x00002d17  auipc x26,2                  172      la s10, CONSOLE
-0x000001d0  0x240d0d13  addi x26,x26,0x00000240           
-0x000001d4  0x00002297  auipc x5,2                   176      la t0, string_1             # Load address of string
-0x000001d8  0xe9c28293  addi x5,x5,0xfffffe9c             
-0x000001dc  0x0002a303  lw x6,0(x5)                  178      lw t1, (t0)                 # Load word (4 chars)
-0x000001e0  0x00400393  addi x7,x0,4                 179      li t2, 4                    # Byte counter
-0x000001e4  0x000c2e03  lw x28,0(x24)                181      lw t3, (s8)                 # Check if console is ready
-0x000001e8  0xfe0e0ee3  beq x28,x0,0xfffffffc        182      beqz t3, NEXT_CHAR_RES      # Not ready, continue waiting
-0x000001ec  0x01637e33  and x28,x6,x22               183      and t3, t1, s6              # Apply LSB_MASK
-0x000001f0  0x000e0e63  beq x28,x0,0x0000001c        184      beqz t3, CONTINUE           # "\0" detected, finish printing
-0x000001f4  0x01cd2023  sw x28,0(x26)                185      sw t3, (s10)                # Write to CONSOLE
-0x000001f8  0x00835313  srli x6,x6,8                 186      srli t1, t1, 8              # shift next char
-0x000001fc  0xfff38393  addi x7,x7,0xffffffff        187  	addi t2, t2, -1		        # decrement the loop counter
-0x00000200  0xfe0392e3  bne x7,x0,0xffffffe4         188      bnez t2, NEXT_CHAR_RES      # print next char in current word
-0x00000204  0x00428293  addi x5,x5,4                 189      addi t0, t0, 4              # load next word in string
-0x00000208  0xfd5ff0ef  jal x1,0xffffffd4            190      jal PRINT_RES               # repeat word print
-0x0000020c  0x00fda023  sw x15,0(x27)                194      sw a5, (s11)		        # show received character (ASCII) on the 7-Seg display
-0x00000210  0x00080a63  beq x16,x0,0x00000014        195      beqz a6, CONTINUE_1         # if gradient is positive, no need print sign
-0x00000214  0x000c2e03  lw x28,0(x24)                196      lw t3, (s8)                 # Check if console is ready
-0x00000218  0xfe0e0ae3  beq x28,x0,0xfffffff4        197      beqz t3, CONTINUE           # Not ready, continue waiting
-0x0000021c  0x02d00e13  addi x28,x0,0x0000002d       198      li t3, '-'                  # Load '-' for printing
-0x00000220  0x01cd2023  sw x28,0(x26)                199      sw t3, (s10)                # Print to console
-0x00000224  0x00e002b3  add x5,x0,x14                202      add t0, zero, a4            # Load gradient (magnitude)
-0x00000228  0xfd010113  addi x2,x2,0xffffffd0        203      addi sp, sp, -48            # stack grow donwards
-0x0000022c  0x00000e93  addi x29,x0,0                204      li t4, 0                    # counter for number of characters
-0x00000230  0x00010f33  add x30,x2,x0                205      add t5, sp, zero            # stack pointer for storing digits
-0x00000234  0x00048463  beq x9,x0,0x00000008         207      beqz s1, CONTINUE_1_DIV     #  if Y1 != Y2, go to printing gradient
-0x00000238  0x00b002b3  add x5,x0,x11                208      add t0, zero, a1            # otherwise load Y1
-0x0000023c  0x02028063  beq x5,x0,0x00000020         211      beqz t0, PRINT_GRADIENT_CONTINUE    # If nothing to add to stack, go to print
-0x00000240  0x0332e3b3  rem x7,x5,x19                212      rem t2, t0, s3                      # extract the remainder (last digit in base10)
-0x00000244  0x0332c2b3  div x5,x5,x19                213      div t0, t0, s3                      # remove the last digit in base 10
-0x00000248  0x012383b3  add x7,x7,x18                214      add t2, t2, s2                      # Convert to ascii
-0x0000024c  0x007f2023  sw x7,0(x30)                 217      sw t2, (t5)                 # store digit into stack
-0x00000250  0x001e8e93  addi x29,x29,1               218      addi t4, t4, 1              # increase number of characters
-0x00000254  0x004f0f13  addi x30,x30,4               219      addi t5, t5, 4              # move pointer to next memory location    
-0x00000258  0xfe5ff0ef  jal x1,0xffffffe4            220      jal CONTINUE_1_DIV          # Repeat printing digits
-0x0000025c  0x020e8063  beq x29,x0,0x00000020        223      beqz t4, CONTINUE_2     # If nothing else to print go to intercept
-0x00000260  0xfffe8e93  addi x29,x29,0xffffffff      224      addi t4, t4, -1         # decrement number of characters
-0x00000264  0xffcf0f13  addi x30,x30,0xfffffffc      225      addi t5, t5, -4         # move to next character
-0x00000268  0x000c2283  lw x5,0(x24)                 228      lw t0, (s8)                     # check if console is ready
-0x0000026c  0xfe028ee3  beq x5,x0,0xfffffffc         229      beqz t0, PRINT_GRADIENT_WAIT    # Not ready, continue waiting
-0x00000270  0x000f2e03  lw x28,0(x30)                230      lw t3, (t5)                     # load char from memory
-0x00000274  0x01cd2023  sw x28,0(x26)                231      sw t3, (s10)                    # Print char to Console
-0x00000278  0xfe5ff0ef  jal x1,0xffffffe4            232      jal PRINT_GRADIENT_CONTINUE
-0x0000027c  0xd80492e3  bne x9,x0,0xfffffd84         235      bnez s1, main               # if Y1 == Y2, go back to top
-0x00000280  0x000c2e03  lw x28,0(x24)                237      lw t3, (s8)                 # Check if console is ready
-0x00000284  0xfe0e0ce3  beq x28,x0,0xfffffff8        238      beqz t3, CONTINUE_2         # Not ready, continue waiting
-0x00000288  0x05800e13  addi x28,x0,0x00000058       239      li t3, 'X'                  # Load 'X' to be printed
-0x0000028c  0x01cd2023  sw x28,0(x26)                240      sw t3, (s10)                # Write to CONSOLE
-0x00000290  0xd60788e3  beq x15,x0,0xfffffd70        242      beqz a5, main               # if y-intercept is 0, go back to top
-0x00000294  0x0157f2b3  and x5,x15,x21               244      and t0, a5, s5              # Apply SIGN MASK to Y-Intercept
-0x00000298  0x02b00e13  addi x28,x0,0x0000002b       245      li t3, '+'                  # Load '+' sign
-0x0000029c  0x00028663  beq x5,x0,0x0000000c         246      beqz t0, CONTINUE_2_SIGN    # if Y-intercept positive, print sign
-0x000002a0  0x02d00e13  addi x28,x0,0x0000002d       247      li t3, '-'                  # otherwise load '-' sign
-0x000002a4  0x40f007b3  sub x15,x0,x15               248      sub a5, zero, a5            # Magnitude of intercept
-0x000002a8  0x000c2283  lw x5,0(x24)                 251      lw t0, (s8)                 # Check if console is ready
-0x000002ac  0xfe028ee3  beq x5,x0,0xfffffffc         252      beqz t0, CONTINUE_2_SIGN    # Not ready, continue waiting
-0x000002b0  0x01cd2023  sw x28,0(x26)                253      sw t3, (s10)                # Print sign
-0x000002b4  0x00f002b3  add x5,x0,x15                255      add t0, zero, a5            # Temporary for y-intercept mag
-0x000002b8  0xfd010113  addi x2,x2,0xffffffd0        256      addi sp, sp, -48            # stack grow donwards
-0x000002bc  0x00000e93  addi x29,x0,0                257      li t4, 0                    # counter for number of characters
-0x000002c0  0x00010f33  add x30,x2,x0                258      add t5, sp, zero            # stack pointer for storing digits
-0x000002c4  0x02028063  beq x5,x0,0x00000020         261      beqz t0, PRINT_INT_CONTINUE     # If no more digits, go to print      
-0x000002c8  0x0332e3b3  rem x7,x5,x19                262      rem t2, t0, s3                  # Extract remainder (last digit of base-10)
-0x000002cc  0x0332c2b3  div x5,x5,x19                263      div t0, t0, s3                  # Remove last digit of base-10
-0x000002d0  0x012383b3  add x7,x7,x18                264      add t2, t2, s2                  # Convert to ASCII
-0x000002d4  0x007f2023  sw x7,0(x30)                 267      sw t2, (t5)                 # store digit into stack
-0x000002d8  0x001e8e93  addi x29,x29,1               268      addi t4, t4, 1              # increase number of characters
-0x000002dc  0x004f0f13  addi x30,x30,4               269      addi t5, t5, 4              # move pointer to next memory location
-0x000002e0  0xfe5ff0ef  jal x1,0xffffffe4            271      jal CONTINUE_2_DIV          # Continue printing next digit
-0x000002e4  0xd00e8ee3  beq x29,x0,0xfffffd1c        274      beqz t4, main           # If nothing else to print go to main
-0x000002e8  0xfffe8e93  addi x29,x29,0xffffffff      275      addi t4, t4, -1         # decrement number of characters
-0x000002ec  0xffcf0f13  addi x30,x30,0xfffffffc      276      addi t5, t5, -4         # move to next character
-0x000002f0  0x000c2283  lw x5,0(x24)                 279      lw t0, (s8)                     # check if console is ready
-0x000002f4  0xfe028ee3  beq x5,x0,0xfffffffc         280      beqz t0, PRINT_INT_WAIT    # Not ready, continue waiting
-0x000002f8  0x000f2e03  lw x28,0(x30)                281      lw t3, (t5)                     # load char from memory
-0x000002fc  0x01cd2023  sw x28,0(x26)                282      sw t3, (s10)                    # Print char to Console
-0x00000300  0xfe5ff0ef  jal x1,0xffffffe4            283      jal PRINT_INT_CONTINUE
-0x00000304  0x00002e97  auipc x29,2                  286      la t4, string_2         # Load invalid string
-0x00000308  0xd8ce8e93  addi x29,x29,0xfffffd8c           
-0x0000030c  0x000ea283  lw x5,0(x29)                 288  	lw t0, (t4)		        # load the word (4 characters) to be displayed
-0x00000310  0x00400393  addi x7,x0,4                 289  	li t2, 4		        # byte counter
-0x00000314  0x000c2303  lw x6,0(x24)                 291  	lw t1, (s8)		        # check if CONSOLE is ready to send a new character
-0x00000318  0xfe030ee3  beq x6,x0,0xfffffffc         292  	beqz t1, NEXT_CHAR_2	# not ready, continue waiting
-0x0000031c  0x0162f333  and x6,x5,x22                293  	and t1, t0, s6 		    # apply LSB_MASK
-0x00000320  0xce0300e3  beq x6,x0,0xfffffce0         294  	beqz t1, main 	        # null terminator ('\0') detected, done. Return to Programme Start
-0x00000324  0x006d2023  sw x6,0(x26)                 295  	sw t1, (s10) 		    # write to UART the Byte(4-t2) of the original word (composed of 4 characters) in (7:0) of the word to be written (remember, we can only write words, and LEDs/UART displays only (7:0) of the written word)
-0x00000328  0x0082d293  srli x5,x5,8                 296  	srli t0, t0, 8	 	    # shift so that the next character comes into LSB
-0x0000032c  0xfff38393  addi x7,x7,0xffffffff        297  	addi t2, t2, -1		    # decrement the loop counter
-0x00000330  0xfe0392e3  bne x7,x0,0xffffffe4         298  	bnez t2, NEXT_CHAR_2	# check and print the next character in the word
-0x00000334  0x004e8e93  addi x29,x29,4               299  	addi t4, t4, 4		    # point to next word (4 characters)
-0x00000338  0xfd5ff0ef  jal x1,0xffffffd4            300  	jal PRINT_2             # continue printing
+80000ab7
+000a8a93
+0ff00b13
+00002b97
+3f4b8b93
+00002c17
+400c0c13
+00002c97
+3f4c8c93
+00002d17
+3e8d0d13
+00002d97
+3ecd8d93
+00000513
+00000593
+00000613
+00000693
+00000713
+00000793
+00000813
+00000493
+03000913
+00a00993
+00d00a13
+00002e97
+fb0e8e93
+000ea283
+00400393
+000c2303
+fe030ee3
+0162f333
+00030e63
+006d2023
+0082d293
+fff38393
+fe0392e3
+004e8e93
+fd5ff0ef
+000ca303
+fe030ee3
+000d2283
+005da023
+01428a63
+03350533
+412282b3
+00550533
+fe1ff0ef
+000ca303
+fe030ee3
+000d2283
+005da023
+01428a63
+033585b3
+412282b3
+005585b3
+fe1ff0ef
+000ca303
+fe030ee3
+000d2283
+005da023
+01428a63
+03360633
+412282b3
+00560633
+fe1ff0ef
+000ca303
+fe030ee3
+000d2283
+005da023
+01428a63
+033686b3
+412282b3
+005686b3
+fe1ff0ef
+1ec50063
+40c502b3
+0152f333
+00000e13
+00030463
+00100e13
+40d582b3
+00100493
+08028a63
+00000493
+0152f333
+00000e93
+00030463
+00100e93
+00000813
+01de0463
+00100813
+00050c33
+00058cb3
+00060d33
+00068db3
+000e0863
+000c02b3
+000d0c33
+00028d33
+000e8863
+000c82b3
+000d8cb3
+00028db3
+41ac02b3
+41bc8333
+02535733
+00eda023
+02e502b3
+00080463
+405002b3
+405587b3
+00002c17
+258c0c13
+00002c97
+24cc8c93
+00002d17
+240d0d13
+00002d97
+244d8d93
+00002297
+e9428293
+0002a303
+00400393
+000c2e03
+fe0e0ee3
+01637e33
+000e0e63
+01cd2023
+00835313
+fff38393
+fe0392e3
+00428293
+fd5ff0ef
+00080a63
+000c2e03
+fe0e0ce3
+02d00e13
+01cd2023
+00e002b3
+fd010113
+00000e93
+00010f33
+00048463
+00b002b3
+02028063
+0332e3b3
+0332c2b3
+012383b3
+007f2023
+001e8e93
+004f0f13
+fe5ff0ef
+020e8063
+fffe8e93
+ffcf0f13
+000c2283
+fe028ee3
+000f2e03
+01cd2023
+fe5ff0ef
+d80490e3
+000c2e03
+fe0e0ce3
+05800e13
+01cd2023
+d60786e3
+0157f2b3
+02b00e13
+00028663
+02d00e13
+40f007b3
+000c2283
+fe028ee3
+01cd2023
+00f002b3
+fd010113
+00000e93
+00010f33
+02028063
+0332e3b3
+0332c2b3
+012383b3
+007f2023
+001e8e93
+004f0f13
+fe5ff0ef
+d00e8ce3
+fffe8e93
+ffcf0f13
+000c2283
+fe028ee3
+000f2e03
+01cd2023
+fe5ff0ef
+00002e97
+d88e8e93
+000ea283
+00400393
+000c2303
+fe030ee3
+0162f333
+cc030ee3
+006d2023
+0082d293
+fff38393
+fe0392e3
+004e8e93
+fd5ff0ef
