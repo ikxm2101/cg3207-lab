@@ -29,7 +29,7 @@ main:
 	la s9, CONSOLE_IN_valid		# UART new data flag
 	la s10, CONSOLE			# UART
 	li s11, 0x00002418		# SEVENSEG. Used li just to test lui
-	#la s11, SEVENSEG
+	# la s11, SEVENSEG
 
 WAIT_A:
 	lw t1, (s9)		# read the new character flag
