@@ -58,7 +58,6 @@ WAIT_X:
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_X        # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    # sw t0, (s11)                # HACK
     beq t0, s4, WAIT_Y          # '\r' received, goto to WAIT_Y
 
     # Populate the register based on characters received
@@ -71,7 +70,6 @@ WAIT_Y:
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_Y        # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    # sw t0, (s11)                # HACK
     beq t0, s4, CALC            # '\r' received, goto to WAIT_X2
 
     # Populate the register based on characters received
