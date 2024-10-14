@@ -205,36 +205,25 @@ CONTINUE:
 
 CONTINUE_1:
     add t0, zero, a4            # Load gradient (magnitude)
-    addi sp, sp, -48            # stack grow donwards
-    li t4, 0                    # counter for number of characters
-    add t5, sp, zero            # stack pointer for storing digits
 
     beqz s1, CONTINUE_1_DIV     #  if Y1 != Y2, go to printing gradient
     add t0, zero, a1            # otherwise load Y1
 
 CONTINUE_1_DIV:
-    beqz t0, PRINT_GRADIENT_CONTINUE    # If nothing to add to stack, go to print
+    beqz t0, CONTINUE_2    # If nothing left to print, move on to sign
     rem t2, t0, s3                      # extract the remainder (last digit in base10)
     div t0, t0, s3                      # remove the last digit in base 10
     add t2, t2, s2                      # Convert to ascii
     
 CONTINUE_1_WAIT:
-    sw t2, (t5)                 # store digit into stack
-    addi t4, t4, 1              # increase number of characters
-    addi t5, t5, 4              # move pointer to next memory location    
+    # sw t2, (t5)                 # store digit into stack
+    # addi t4, t4, 1              # increase number of characters
+    # addi t5, t5, 4              # move pointer to next memory location
+    lw t0, (s8)                     # check if console is ready
+    beqz t0, CONTINUE_1_WAIT    # Not ready, continue waiting
+    sw t2, (s10)                    # Print char to Console
     jal CONTINUE_1_DIV          # Repeat printing digits
 
-PRINT_GRADIENT_CONTINUE:
-    beqz t4, CONTINUE_2     # If nothing else to print go to intercept
-    addi t4, t4, -1         # decrement number of characters
-    addi t5, t5, -4         # move to next character
-
-PRINT_GRADIENT_WAIT:
-    lw t0, (s8)                     # check if console is ready
-    beqz t0, PRINT_GRADIENT_WAIT    # Not ready, continue waiting
-    lw t3, (t5)                     # load char from memory
-    sw t3, (s10)                    # Print char to Console
-    jal PRINT_GRADIENT_CONTINUE
 
 CONTINUE_2:
     bnez s1, main               # if Y1 == Y2, go back to top
@@ -258,34 +247,19 @@ CONTINUE_2_SIGN:
     sw t3, (s10)                # Print sign
 
     add t0, zero, a5            # Temporary for y-intercept mag
-    addi sp, sp, -48            # stack grow donwards
-    li t4, 0                    # counter for number of characters
-    add t5, sp, zero            # stack pointer for storing digits
     
 CONTINUE_2_DIV:     
-    beqz t0, PRINT_INT_CONTINUE     # If no more digits, go to print      
+    beqz t0, main     # If no more digits, go to main      
     rem t2, t0, s3                  # Extract remainder (last digit of base-10)
     div t0, t0, s3                  # Remove last digit of base-10
     add t2, t2, s2                  # Convert to ASCII
 
 CONTINUE_2_WAIT:
-    sw t2, (t5)                 # store digit into stack
-    addi t4, t4, 1              # increase number of characters
-    addi t5, t5, 4              # move pointer to next memory location
-
-    jal CONTINUE_2_DIV          # Continue printing next digit
-
-PRINT_INT_CONTINUE:
-    beqz t4, main           # If nothing else to print go to main
-    addi t4, t4, -1         # decrement number of characters
-    addi t5, t5, -4         # move to next character
-
-PRINT_INT_WAIT:
     lw t0, (s8)                     # check if console is ready
-    beqz t0, PRINT_INT_WAIT    # Not ready, continue waiting
-    lw t3, (t5)                     # load char from memory
-    sw t3, (s10)                    # Print char to Console
-    jal PRINT_INT_CONTINUE
+    beqz t0, CONTINUE_2_WAIT        # Not ready, continue waiting
+    sw t2, (s10)                    # Print char to Console
+    jal CONTINUE_2_DIV              # Continue printing next digit
+
 
 INVALID_M_INF:
     la t4, string_2         # Load invalid string
