@@ -62,7 +62,7 @@ WAIT_X1:
     beq t1, zero, WAIT_X1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
-    lw t0, (s11)                # HACK
+    sw t0, (s11)                # HACK
     beq t0, s4, WAIT_Y1         # '\r' received, goto to WAIT_Y1
 
     # Populate the register based on characters received
@@ -72,12 +72,12 @@ WAIT_X1:
     jal WAIT_X1                 # jump back to receive next character
 
 WAIT_Y1:
-    lw a0, (s11)                # write a0 to s11
+    # sw a0, (s11)                # write a0 to s11
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_Y1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
-    lw t0, (s11)                # HACK
+    sw t0, (s11)                # HACK
     beq t0, s4, WAIT_X2         # '\r' received, goto to WAIT_X2
 
     # Populate the register based on characters received
@@ -87,12 +87,12 @@ WAIT_Y1:
     jal WAIT_Y1                 # jump back to receive next character
 
 WAIT_X2:
-    lw a1, (s11)                # write a1 to s11
+    # sw a1, (s11)                # write a1 to s11
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_X2       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
-    lw t0, (s11)                # HACK
+    sw t0, (s11)                # HACK
     beq t0, s4, WAIT_Y2         # '\r' received, goto to WAIT_Y2
 
     # Populate the register based on characters received
@@ -102,12 +102,12 @@ WAIT_X2:
     jal WAIT_X2                 # jump back to receive next character
 
 WAIT_Y2:
-    lw a2, (s11)                # write a2 to s11
+    # sw a2, (s11)                # write a2 to s11
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_Y2       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
-    lw t0, (s11)                # HACK
+    sw t0, (s11)                # HACK
     beq t0, s4, CALC            # '\r' received, goto to CALC
 
     # Populate the register based on characters received
@@ -117,7 +117,7 @@ WAIT_Y2:
     jal WAIT_Y2                 # jump back to receive next character
 
 CALC:
-    lw a3, (s11)                # write a3 to s11
+    # sw a3, (s11)                # write a3 to s11
     # a0: X1, a1: Y1, a2: X2, a3: Y2, a6: gradient sign
 
     beq a0, a2, INVALID_M_INF   # x1 and x2 same, m is infinite
