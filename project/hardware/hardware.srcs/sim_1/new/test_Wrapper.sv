@@ -128,10 +128,10 @@ module test_Wrapper #(
 
 	// To verify overall functionality with lab3.asm
 	localparam LED_PC_MAIN = 7'b000_0000;
-	localparam LED_PC_WAIT_X1 = 7'b010_0100;
-	localparam LED_PC_WAIT_Y1 = 7'b010_1101;
-	localparam LED_PC_WAIT_X2 = 7'b011_0110;
-	localparam LED_PC_WAIT_Y2 = 7'b011_1111;
+	localparam LED_PC_WAIT_X1 = 7'b010_0110;
+	localparam LED_PC_WAIT_Y1 = 7'b011_0000;
+	localparam LED_PC_WAIT_X2 = 7'b011_1010;
+	localparam LED_PC_WAIT_Y2 = 7'b100_0100;
 
 	/* Testbench stimuli */
     initial begin
