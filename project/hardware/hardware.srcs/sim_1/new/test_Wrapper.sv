@@ -54,7 +54,8 @@ module test_Wrapper #(
 		.CLK(CLK)
 	);
 	
-	/* 
+	/* Tasks */
+	/* NOTE:
 	 * Automatic tasks:
 	 *	1. New instances of local variables are created for each call.
 	 *	2. Local variables don't retain values between calls.
@@ -63,8 +64,7 @@ module test_Wrapper #(
 	 *	2. There's only one instance of each local variable, shared across all calls.
 	 */
 
-	/* Tasks for button and DIP switches */
-	task automatic press_button(ref logic button, input [6:0] release_PC);
+	task automatic PB_PressButton(ref logic button, input [6:0] release_PC);
 		button = 1'b1; // set button
 		PB = {btnL, btnC, btnR}; // update PB register
 		wait(LED_PC == release_PC);
@@ -72,124 +72,119 @@ module test_Wrapper #(
 		PB = {btnL, btnC, btnR}; // update PB register
   	endtask
 	
-	task automatic reset_button(ref logic button);
+	task automatic PB_ResetButton(ref logic button);
 		button = 1'b0;
 	endtask
 
-	task set_dip_switches(input [15:0] dip_value);
+	task automatic DIP_SetSwitches(input [15:0] dip_value);
 		DIP = dip_value;
   	endtask
 
+	task automatic CONSOLE_TransmitString(input string str);
+		/* Sequence of signals for UART input:
+			* 1. Write an input to CONSOLE_IN
+			* 2. Set CONSOLE_IN_valid to 1
+			* 3. Wait for CONSOLE_IN_ack to be 1
+			* 4. Wait for CONSOLE_IN_ack to be 0
+			* 4. Set CONSOLE_IN_valid to 0
+		*/
+		for (int i = 0; i < str.len(); i++) begin
+			CONSOLE_IN = str[i];
+			CONSOLE_IN_valid = 1'b1;
+			wait(CONSOLE_IN_ack);
+			wait(~CONSOLE_IN_ack);
+			CONSOLE_IN_valid = 1'b0;
+		end
+
+		// Send carriage return, '\r' to indicate end of string
+		CONSOLE_IN = 8'h0D; // '\r'
+        CONSOLE_IN_valid = 1'b1;
+        wait(CONSOLE_IN_ack);
+        wait(~CONSOLE_IN_ack);
+        CONSOLE_IN_valid = 1'b0;
+	endtask
+
+	string CONSOLE_OutputString = "";
+	task automatic CONSOLE_ReceiveString();
+		while (LED_PC != LED_PC_MAIN) begin
+			@(CONSOLE_OUT) begin
+				CONSOLE_OutputString = {CONSOLE_OutputString, string'(CONSOLE_OUT)};
+			end
+		end
+	endtask
+	
 	/* Clock generation */      
     always #5 CLK = ~CLK ; // invert clk every 5 time units (ns) -> period of 10 ns -> 100 MHz clock
 
-	/* LED_PC for instructions of interest 
-	 * DISPLAY1 -> cycling display
-	 * DISPLAY2 -> display to showcase sll and sra 
-	*/
-
-	/* Used with previous revision of lab2.asm that implements button presses in polling mode 
-	// localparam DISPLAY1_BUTTON_READ = 7'b001_0100;
-	// localparam DISPLAY1_SHOW_LED_1 = 7'b001_1001;
-	// localparam DISPLAY1_SHOW_SEVENSEG_1 = 7'b001_1010;
-	// localparam DISPLAY1_SHOW_LED_2 = 7'b001_1101;
-	// localparam DISPLAY1_SHOW_SEVENSEG_2 = 7'b001_1010;
+	/* LED_PC for instructions of interest */
 	
-	// localparam DISPLAY2_BUTTON_READ = 7'b010_0100;
-	// localparam CHANGE_TO_DISPLAY2_ENTRY = 7'b010_0011;
-	// localparam DISPLAY2_BTNL_SLL_ENTRY = 7'b010_1111;
-	// localparam DISPLAY2_BTNR_SRA_ENTRY = 7'b010_1101;
-	*/
+	// To verify datapath with lab3_check_datapath.asm
+	localparam LED_PC_TEST_MUL = 7'b000_0100;
+	localparam LED_PC_CHECK_MUL = 7'b000_0101;
+	localparam LED_PC_TEST_REM = 7'b000_0110;
+	localparam LED_PC_CHECK_REM = 7'b000_0111;
+	localparam LED_PC_TEST_DIVU = 7'b000_1000;
+	localparam LED_PC_CHECK_DIVU = 7'b000_1001;
 
-	/* Used with newest revision of lab2.asm that implements button presses in polling mode with flags */
-	localparam DETECT_BUTTON = 7'b000_1111;
-    
-    // sub, or
-	localparam NORMAL_DISPLAY_F0_SHOW_LED = 7'b011_0010;
-	localparam NORMAL_DISPLAY_F0_SHOW_SEVENSEG = 7'b011_0011;
-	
-	// add, and
-	localparam NORMAL_DISPLAY_F1_SHOW_LED = 7'b010_1110;
-	localparam NORMAL_DISPLAY_F1_SHOW_SEVENSEG = 7'b010_1111;
+	// To verify overall functionality with lab3.asm
+	localparam LED_PC_MAIN = 7'b000_0000;
+	localparam LED_PC_WAIT_X1 = 7'b010_0100;
+	localparam LED_PC_WAIT_Y1 = 7'b010_1101;
+	localparam LED_PC_WAIT_X2 = 7'b011_0110;
+	localparam LED_PC_WAIT_Y2 = 7'b011_1111;
 
-	localparam MODE_SELECT_ENTRY = 7'b001_1000;
-
-	// STIMULI
+	/* Testbench stimuli */
     initial begin
 		/* Initialise signals */
 		CLK = 1; // so posedges happen at intervals of 10ns
-		PB = 3'b000;
-		DIP = 16'h0000;
+
+		/* 
+		 * OK to keep CONSOLE_OUT_ready high continously in the testbench.
+		 * In reality, it will be high only if UART is ready to send a data to PC
+		*/
+		CONSOLE_OUT_ready = 1'h1;
+		// $monitor("Time= %t, RegBank: %p", $time, dut.RV1.IRegFile1.RegBank);
+
+		// $monitor("Time= %t, SEVENSEGHEX: %d", $time, SEVENSEGHEX);
+
+		$monitor("Time= %t, CONSOLE_IN: %s", $time, CONSOLE_IN);
+		$monitor("Time= %t, CONSOLE_OUT: %s", $time, CONSOLE_OUT);
+		$monitor("Time= %t, CONSOLE_OutputString: %s", $time, CONSOLE_OutputString);
 
 		// TODO: Insert rest of the stimuli here
 		/*
 		 * User inputs:
-		 	* DIP:	DIPs[7:0] -> rs1, DIPs[15:8] -> rs2
-		 	* PB:	btnC -> used to change the display result to showcase 'sub' instruction
-			* 		btnL -> used to showcase 'sll' instruction
-			* 		btnR -> used to showcase 'sra' instruction
+		 	* CONSOLE_IN:
+
 		 * User outputs: 
-		 	* LED_OUT: LED[15:8] -> 8-bit output to display the results:
-										* 1. 'and'
-										* 2. 'or' 
-			* SEVENSEGHEX: 	display the results:
-								* 1. 'add'
-								* 2. 'sub'
+		 	* CONSOLE_OUT:
 		*/
-
-		/* Test Cases */
-		// set_dip_switches(16'h1234);
-		// set_dip_switches(16'hA050); // to test sra (DIPS[7:0] - DIPS[15:8] = -80, implemented in previous lab2.asm revision)
-		set_dip_switches(16'h50A0); // to test sra (DIPS[15:8] - DIPS[7:0] = -80, implemented in newest lab2.asm revision)
-
-		/* Reset the processor */
-		RESET = 1; repeat(2) @(posedge CLK); RESET = 0; 
-
-		/*
-		 * btnC = 0 -> Cycles between:
-		 *			-> and instruction on LED_OUT / add instruction on SEVENSEGHEX
-		 * 			-> OR instruction on LED_OUT / sub instruction on SEVENSEGHEX
-		*/
-		wait (LED_PC == DETECT_BUTTON);
-		reset_button(.button(btnC));
-
-		wait (LED_PC == NORMAL_DISPLAY_F1_SHOW_LED);
-		$display("and instruction: LED_OUT = %b", LED_OUT);
-		// assert(LED_OUT == 8'b0001_0000) else $error("and instruction failed");
-
-		wait (LED_PC == NORMAL_DISPLAY_F1_SHOW_SEVENSEG);
-		$display("ADD instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		// assert(SEVENSEGHEX == 8'b0100_0110) else $error("add instruction failed");
 		
-		wait (LED_PC == NORMAL_DISPLAY_F0_SHOW_LED);
-		$display("or instruction: LED_OUT = %b", LED_OUT);
-		// assert(LED_OUT == 8'b0011_0110) else $error("or instruction failed");
+		/* Reset the processor */
+		RESET = 1; repeat(2) @(posedge CLK); RESET = 0;
+		
+		/* Verifies datapath with lab3_check_datapath.asm */
+		// forever begin
+		// 	wait(LED_PC == LED_PC_CHECK_MUL);
+		// 	wait(LED_PC == LED_PC_CHECK_REM);
+		// 	wait(LED_PC == LED_PC_CHECK_DIVU);
+		// end
+		
+		/* Verifies overall functionality with lab3.asm */
+		wait(LED_PC == LED_PC_WAIT_X1);
+		CONSOLE_TransmitString("10");
 
-		wait (LED_PC == NORMAL_DISPLAY_F0_SHOW_SEVENSEG);
-		$display("sub instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		// assert(SEVENSEGHEX == 8'b0010_0010) else $error("sub instruction failed");
+		wait(LED_PC == LED_PC_WAIT_Y1);
+		CONSOLE_TransmitString("20");
 
-		/*
-		 * btnC = 1 -> Changes SEVENSEGHEX display to showcase sub instruction:
-		 *			-> sll done on sub instruction output
-		 * 			-> sra done on sub instruction output
-		*/
+		wait(LED_PC == LED_PC_WAIT_X2);
+		CONSOLE_TransmitString("30");
 
-		wait (LED_PC == DETECT_BUTTON);
-		press_button(.button(btnC), .release_PC(MODE_SELECT_ENTRY)); // change to different display mode to showcase sll and sra
-		$display("sub instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		// assert(SEVENSEGHEX == 8'b1101_1110) else $error("sub instruction failed");
+		wait(LED_PC == LED_PC_WAIT_Y2);
+		CONSOLE_TransmitString("40");
 
-		wait (LED_PC == DETECT_BUTTON);
-		press_button(.button(btnL), .release_PC(MODE_SELECT_ENTRY));
-		$display("sll instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		// assert(SEVENSEGHEX == 8'b0101_0100) else $error("sll instruction failed");
-
-		wait (LED_PC == DETECT_BUTTON);
-		press_button(.button(btnR), .release_PC(MODE_SELECT_ENTRY));
-		$display("sra instruction: SEVENSEGHEX = %b", SEVENSEGHEX);
-		// assert(SEVENSEGHEX == 8'b0010_1010) else $error("sra instruction failed");
-
+		CONSOLE_ReceiveString();
+		
 		repeat(100) @(posedge CLK); // wait for 100 clock cycles before finishing the simulation
 		$finish;
     end
