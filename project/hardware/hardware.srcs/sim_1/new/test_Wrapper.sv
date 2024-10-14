@@ -119,24 +119,31 @@ module test_Wrapper #(
 	/* LED_PC for instructions of interest */
 	
 	// To verify datapath with lab3_check_datapath.asm
-	localparam LED_PC_TEST_MUL = 7'b000_0100;
-	localparam LED_PC_CHECK_MUL = 7'b000_0101;
-	localparam LED_PC_TEST_REM = 7'b000_0110;
-	localparam LED_PC_CHECK_REM = 7'b000_0111;
-	localparam LED_PC_TEST_DIVU = 7'b000_1000;
-	localparam LED_PC_CHECK_DIVU = 7'b000_1001;
+	// localparam LED_PC_TEST_MUL = 7'b000_0100;
+	// localparam LED_PC_CHECK_MUL = 7'b000_0101;
+	// localparam LED_PC_TEST_REM = 7'b000_0110;
+	// localparam LED_PC_CHECK_REM = 7'b000_0111;
+	// localparam LED_PC_TEST_DIVU = 7'b000_1000;
+	// localparam LED_PC_CHECK_DIVU = 7'b000_1001;
 
 	// To verify overall functionality with lab3.asm
+	// localparam LED_PC_MAIN = 7'b000_0000;
+	// localparam LED_PC_WAIT_X1 = 7'b010_0110;
+	// localparam LED_PC_WAIT_Y1 = 7'b011_0000;
+	// localparam LED_PC_WAIT_X2 = 7'b011_1010;
+	// localparam LED_PC_WAIT_Y2 = 7'b100_0100;
+	
+	// To verify overall functionality with lab3_backup.asm
 	localparam LED_PC_MAIN = 7'b000_0000;
-	localparam LED_PC_WAIT_X1 = 7'b010_0110;
-	localparam LED_PC_WAIT_Y1 = 7'b011_0000;
-	localparam LED_PC_WAIT_X2 = 7'b011_1010;
-	localparam LED_PC_WAIT_Y2 = 7'b100_0100;
-
+	localparam LED_PC_WAIT_X = 7'b010_0010;
+	localparam LED_PC_WAIT_Y = 7'b010_1010;
+	localparam LED_PC_DISPLAY_LOOP = 7'b011_0100;
+	
 	/* Testbench stimuli */
     initial begin
 		/* Initialise signals */
 		CLK = 1; // so posedges happen at intervals of 10ns
+		DIP = 16'h0000;
 
 		/* 
 		 * OK to keep CONSOLE_OUT_ready high continously in the testbench.
@@ -145,11 +152,11 @@ module test_Wrapper #(
 		CONSOLE_OUT_ready = 1'h1;
 		// $monitor("Time= %t, RegBank: %p", $time, dut.RV1.IRegFile1.RegBank);
 
-		// $monitor("Time= %t, SEVENSEGHEX: %d", $time, SEVENSEGHEX);
+		$monitor("Time= %t, SEVENSEGHEX: %d", $time, SEVENSEGHEX);
 
-		$monitor("Time= %t, CONSOLE_IN: %s", $time, CONSOLE_IN);
-		$monitor("Time= %t, CONSOLE_OUT: %s", $time, CONSOLE_OUT);
-		$monitor("Time= %t, CONSOLE_OutputString: %s", $time, CONSOLE_OutputString);
+		$monitor("Time= %t, CONSOLE_IN: %d", $time, CONSOLE_IN);
+		// $monitor("Time= %t, CONSOLE_OUT: %s", $time, CONSOLE_OUT);
+		// $monitor("Time= %t, CONSOLE_OutputString: %s", $time, CONSOLE_OutputString);
 
 		// TODO: Insert rest of the stimuli here
 		/*
@@ -171,19 +178,50 @@ module test_Wrapper #(
 		// end
 		
 		/* Verifies overall functionality with lab3.asm */
-		wait(LED_PC == LED_PC_WAIT_X1);
-		CONSOLE_TransmitString("10");
+		// wait(LED_PC == LED_PC_WAIT_X1);
+		// CONSOLE_TransmitString("1");
 
-		wait(LED_PC == LED_PC_WAIT_Y1);
-		CONSOLE_TransmitString("20");
+		// wait(LED_PC == LED_PC_WAIT_Y1);
+		// CONSOLE_TransmitString("1");
 
-		wait(LED_PC == LED_PC_WAIT_X2);
-		CONSOLE_TransmitString("30");
+		// wait(LED_PC == LED_PC_WAIT_X2);
+		// CONSOLE_TransmitString("2");
 
-		wait(LED_PC == LED_PC_WAIT_Y2);
-		CONSOLE_TransmitString("40");
+		// wait(LED_PC == LED_PC_WAIT_Y2);
+		// CONSOLE_TransmitString("2");
 
-		CONSOLE_ReceiveString();
+		// CONSOLE_ReceiveString();
+		
+		/* Verifies overall functionality with lab3_backup.asm */
+		wait(LED_PC == LED_PC_WAIT_X);
+		CONSOLE_TransmitString("444");
+
+		wait(LED_PC == LED_PC_WAIT_Y);
+		CONSOLE_TransmitString("222");
+
+		wait(LED_PC == LED_PC_DISPLAY_LOOP);
+		DIP_SetSwitches(16'h0000); // division
+        repeat(100) @(posedge CLK);
+        
+		wait(LED_PC == LED_PC_DISPLAY_LOOP);
+		DIP_SetSwitches(16'h0001); // multiplication
+       	repeat(100) @(posedge CLK);
+        
+        /* Reset the processor */
+		RESET = 1; repeat(2) @(posedge CLK); RESET = 0;
+		
+		wait(LED_PC == LED_PC_WAIT_X);
+		CONSOLE_TransmitString("222");
+
+		wait(LED_PC == LED_PC_WAIT_Y);
+		CONSOLE_TransmitString("444");
+
+		wait(LED_PC == LED_PC_DISPLAY_LOOP);
+		DIP_SetSwitches(16'h0000); // division
+        repeat(100) @(posedge CLK);
+        
+		wait(LED_PC == LED_PC_DISPLAY_LOOP);
+		DIP_SetSwitches(16'h0001); // multiplication
 		
 		repeat(100) @(posedge CLK); // wait for 100 clock cycles before finishing the simulation
 		$finish;
