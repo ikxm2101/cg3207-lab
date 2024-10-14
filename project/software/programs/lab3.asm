@@ -61,7 +61,6 @@ WAIT_X1:
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_X1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    # and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
     sw t0, (s11)                # HACK
     beq t0, s4, WAIT_Y1         # '\r' received, goto to WAIT_Y1
 
@@ -72,11 +71,9 @@ WAIT_X1:
     jal WAIT_X1                 # jump back to receive next character
 
 WAIT_Y1:
-    # sw a0, (s11)                # write a0 to s11
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_Y1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    # and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
     sw t0, (s11)                # HACK
     beq t0, s4, WAIT_X2         # '\r' received, goto to WAIT_X2
 
@@ -87,11 +84,9 @@ WAIT_Y1:
     jal WAIT_Y1                 # jump back to receive next character
 
 WAIT_X2:
-    # sw a1, (s11)                # write a1 to s11
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_X2       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    # and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
     sw t0, (s11)                # HACK
     beq t0, s4, WAIT_Y2         # '\r' received, goto to WAIT_Y2
 
@@ -102,11 +97,9 @@ WAIT_X2:
     jal WAIT_X2                 # jump back to receive next character
 
 WAIT_Y2:
-    # sw a2, (s11)                # write a2 to s11
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_Y2       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    # and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
     sw t0, (s11)                # HACK
     beq t0, s4, CALC            # '\r' received, goto to CALC
 
@@ -117,12 +110,11 @@ WAIT_Y2:
     jal WAIT_Y2                 # jump back to receive next character
 
 CALC:
-    # sw a3, (s11)                # write a3 to s11
     # a0: X1, a1: Y1, a2: X2, a3: Y2, a6: gradient sign
 
     beq a0, a2, INVALID_M_INF   # x1 and x2 same, m is infinite
     sub t0, a0, a2              # x1 - x2
-    and t1, t0, s5              # Apply SIGN MASK
+    and t1, t0, s5              # Apply SIGN MASK   
     li t3, 0                    # 0 == X1 > X2      
     beqz t1, CHECK_Y            # t1 == 0, X1 > X2
     li t3, 1                    # 1 == X2 > x1
@@ -165,7 +157,6 @@ M2:
     sub t0, s8, s10             # t0 = delta of X
     sub t1, s9, s11             # t1 = delta of Y
     divu a4, t1, t0             # a4 = t1 / t0
-    sw a4, (s11)                # HACK: doesnt reach here
     mul t0, a0, a4              # t0 = X1 * Gradient
     beq a6, zero, Y_INTER       # Check gradient sign
     sub t0, zero, t0            # negative: negate t0
@@ -219,8 +210,8 @@ CONTINUE_1_WAIT:
     # sw t2, (t5)                 # store digit into stack
     # addi t4, t4, 1              # increase number of characters
     # addi t5, t5, 4              # move pointer to next memory location
-    lw t0, (s8)                     # check if console is ready
-    beqz t0, CONTINUE_1_WAIT    # Not ready, continue waiting
+    lw t3, (s8)                     # check if console is ready
+    beqz t3, CONTINUE_1_WAIT    # Not ready, continue waiting
     sw t2, (s10)                    # Print char to Console
     jal CONTINUE_1_DIV          # Repeat printing digits
 
@@ -255,8 +246,8 @@ CONTINUE_2_DIV:
     add t2, t2, s2                  # Convert to ASCII
 
 CONTINUE_2_WAIT:
-    lw t0, (s8)                     # check if console is ready
-    beqz t0, CONTINUE_2_WAIT        # Not ready, continue waiting
+    lw t3, (s8)                     # check if console is ready
+    beqz t3, CONTINUE_2_WAIT        # Not ready, continue waiting
     sw t2, (s10)                    # Print char to Console
     jal CONTINUE_2_DIV              # Continue printing next digit
 
