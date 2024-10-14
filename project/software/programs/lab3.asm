@@ -62,6 +62,7 @@ WAIT_X1:
     beq t1, zero, WAIT_X1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
+    lw t0, (s11)                # HACK
     beq t0, s4, WAIT_Y1         # '\r' received, goto to WAIT_Y1
 
     # Populate the register based on characters received
@@ -71,10 +72,12 @@ WAIT_X1:
     jal WAIT_X1                 # jump back to receive next character
 
 WAIT_Y1:
+    lw a0, (s11)                # write a0 to s11
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_Y1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
+    lw t0, (s11)                # HACK
     beq t0, s4, WAIT_X2         # '\r' received, goto to WAIT_X2
 
     # Populate the register based on characters received
@@ -84,10 +87,12 @@ WAIT_Y1:
     jal WAIT_Y1                 # jump back to receive next character
 
 WAIT_X2:
+    lw a1, (s11)                # write a1 to s11
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_X2       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
+    lw t0, (s11)                # HACK
     beq t0, s4, WAIT_Y2         # '\r' received, goto to WAIT_Y2
 
     # Populate the register based on characters received
@@ -97,10 +102,12 @@ WAIT_X2:
     jal WAIT_X2                 # jump back to receive next character
 
 WAIT_Y2:
+    lw a2, (s11)                # write a2 to s11
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_Y2       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
     and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
+    lw t0, (s11)                # HACK
     beq t0, s4, CALC            # '\r' received, goto to CALC
 
     # Populate the register based on characters received
@@ -110,6 +117,7 @@ WAIT_Y2:
     jal WAIT_Y2                 # jump back to receive next character
 
 CALC:
+    lw a3, (s11)                # write a3 to s11
     # a0: X1, a1: Y1, a2: X2, a3: Y2, a6: gradient sign
 
     beq a0, a2, INVALID_M_INF   # x1 and x2 same, m is infinite
@@ -161,8 +169,6 @@ M2:
     mul t0, a0, a4              # t0 = X1 * Gradient
     beq a6, zero, Y_INTER       # Check gradient sign
     sub t0, zero, t0            # negative: negate t0
-    # HACK:
-    sw a4, (s11)		        # show received character (ASCII) on the 7-Seg display
 Y_INTER:
     sub a5, a1, t0              # y_int = Y1 - t0
 
@@ -170,6 +176,7 @@ Y_INTER:
     la s8, CONSOLE_OUT_ready
     la s9, CONSOLE_IN_valid
     la s10, CONSOLE
+    la s11, SEVENSEG
 
 # Printing data
 M_ZERO:
@@ -190,8 +197,6 @@ NEXT_CHAR_RES:
     jal PRINT_RES               # repeat word print
 
 CONTINUE:
-    # HACK:
-    sw a5, (s11)		        # show received character (ASCII) on the 7-Seg display
     beqz a6, CONTINUE_1         # if gradient is positive, no need print sign
     lw t3, (s8)                 # Check if console is ready
     beqz t3, CONTINUE           # Not ready, continue waiting
