@@ -63,7 +63,7 @@ WAIT_X:
 
     # Populate the register based on characters received
     mul a0, a0, s3              # Make space for ones position                     
-    sub t0, t0, s2              # integer = input - '0'
+    addi t0, t0, 48              # integer = input - '0'
     add a0, a0, t0              # a0 = a0 + integer
     jal WAIT_X                  # jump back to receive next character
 
@@ -76,7 +76,7 @@ WAIT_Y:
 
     # Populate the register based on characters received
     mul a1, a1, s3              # Make space for ones position                     
-    sub t0, t0, s2              # integer = input - '0'
+    addi t0, t0, 48              # integer = input - '0'
     add a1, a1, t0              # a1 = a1 + integer
     jal WAIT_Y                  # jump back to receive next character
 
