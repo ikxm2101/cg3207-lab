@@ -6,8 +6,9 @@
     - Accumulated value is multiplied by 10
     - New input digit will be added to the accumulated value
 3. User enter value of Y, uses '\r' to end input
-4. The value of `x*y` and `x/y` are calculated
-5. Based on the position of the dip switch, either the result of `x*y` or `x/y` will be displayed on the Seven Segment
+4. The value of `X * Y` and `X / Y` are calculated
+5. If `DIPS[0] == 1` the result `X / Y` will be shown on the seven segment display
+6. If `DIPS[0] == 0` the result `X * Y` will be shown on the seven segment display
 
   
   ### Variables
