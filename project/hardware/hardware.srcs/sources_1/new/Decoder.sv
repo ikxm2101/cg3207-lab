@@ -196,7 +196,7 @@ module Decoder(
             { FUNCT3_MULU, FUNCT7_M }: MCycleOp = 2'b01;
             { FUNCT3_DIV, FUNCT7_M }: MCycleOp = 2'b10;
             { FUNCT3_DIVU, FUNCT7_M }: MCycleOp = 2'b11;
-            { FUNCT3_REM, FUNCT7_M }: MCycleOp = 2'b00;
+            { FUNCT3_REM, FUNCT7_M }: MCycleOp = 2'b10;
             { FUNCT3_REMU, FUNCT7_M }: MCycleOp = 2'b11;
             default: MCycleOp = 2'bxx;
         endcase
