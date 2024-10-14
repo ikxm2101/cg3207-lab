@@ -61,7 +61,7 @@ WAIT_X1:
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_X1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
+    # and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
     sw t0, (s11)                # HACK
     beq t0, s4, WAIT_Y1         # '\r' received, goto to WAIT_Y1
 
@@ -76,7 +76,7 @@ WAIT_Y1:
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_Y1       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
+    # and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
     sw t0, (s11)                # HACK
     beq t0, s4, WAIT_X2         # '\r' received, goto to WAIT_X2
 
@@ -91,7 +91,7 @@ WAIT_X2:
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_X2       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
+    # and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
     sw t0, (s11)                # HACK
     beq t0, s4, WAIT_Y2         # '\r' received, goto to WAIT_Y2
 
@@ -106,7 +106,7 @@ WAIT_Y2:
     lw t1, (s9)                 # Read new character flag
     beq t1, zero, WAIT_Y2       # Not ready, continue waiting.
     lw t0, (s10)                # Read UART
-    and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
+    # and t0, t0, s6 		        # apply LSB_MASK to get the least sig byte
     sw t0, (s11)                # HACK
     beq t0, s4, CALC            # '\r' received, goto to CALC
 
@@ -165,7 +165,7 @@ M2:
     sub t0, s8, s10             # t0 = delta of X
     sub t1, s9, s11             # t1 = delta of Y
     divu a4, t1, t0             # a4 = t1 / t0
-
+    sw a4, (s11)                # HACK: doesnt reach here
     mul t0, a0, a4              # t0 = X1 * Gradient
     beq a6, zero, Y_INTER       # Check gradient sign
     sub t0, zero, t0            # negative: negate t0
