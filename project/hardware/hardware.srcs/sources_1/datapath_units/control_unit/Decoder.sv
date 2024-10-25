@@ -40,7 +40,7 @@ module Decoder(
     output logic MemWrite,		        // Asserted only by store (sw)
     output logic MemtoReg,		        // Asserted only by load (lw)
     output logic [1:0] ALUSrcA,         // Needed for lui, auipic. Refer to the microarchitecture for its use. Uncomment wire and port map in RV.v as well
-    output logic ALUSrcB,		        // Asserted by all instructions which use an immediate (load, store, lui, auipc, DPImm). Needs to be expanded to a 2-bit signal to support link functionality for jal, jalr. Change wire width in RV.v as well
+    output logic [1:0] ALUSrcB,		    // Asserted by all instructions which use an immediate (load, store, lui, auipc, DPImm). Needs to be expanded to a 2-bit signal to support link functionality for jal, jalr. Change wire width in RV.v as well
     output logic [2:0] ImmSrc, 	        // 000 for U, 010 for UJ, 011 for I, 110 for S, 111 for SB.
     output logic [3:0] ALUControl,	    // 0000 for add, 0001 for sub, 1110 for and, 1100 for or, 0010 for sll, 1010 for srl, 1011 for sra, 0001 for branch, 0000 for all others.
                                         // Note that the most significant 3 bits are Funct3 for all DP instrns. LSB is the same as Funct[5] for DPReg type and DPImm_shifts.
@@ -67,6 +67,7 @@ module Decoder(
         * store	    23 (0100011)
         * branch	63 (1100011)
         * jal	    6F (1101111)
+        * jalr	    67 (1100111)
         * auipc	    17 (0010111)
         * lui	    37 (0110111)
     */
@@ -77,6 +78,7 @@ module Decoder(
     localparam OPCODE_STORE = 7'h23;
     localparam OPCODE_BRANCH = 7'h63;
     localparam OPCODE_JAL = 7'h6F;
+    localparam OPCODE_JALR = 7'h67;
     localparam OPCODE_AUIPC = 7'h17;
     localparam OPCODE_LUI = 7'h37;
     
@@ -116,19 +118,30 @@ module Decoder(
         case (Opcode) 
             OPCODE_BRANCH: PCS = 2'b01; // branch instruction
             OPCODE_JAL: PCS = 2'b10; // jal instruction
+            OPCODE_JALR: PCS = 2'b11; // jalr instruction
             default: PCS = 2'b00; // non control instruction
         endcase
     end
 
     always_comb begin : ALUSrcABlock
         case (Opcode)
-            OPCODE_AUIPC: ALUSrcA = 2'b11;
+            OPCODE_DP_REG, OPCODE_DP_IMM, OPCODE_LOAD,
+            OPCODE_STORE, OPCODE_BRANCH: ALUSrcA = 2'bx0; 
             OPCODE_LUI: ALUSrcA = 2'b01;
-            default: ALUSrcA = 2'bx0;
+            OPCODE_AUIPC, OPCODE_JAL, OPCODE_JALR: ALUSrcA = 2'b11;
+            default: ALUSrcA = 2'bxx;
         endcase
     end
 
-    assign ALUSrcB = (Opcode == OPCODE_DP_REG || Opcode == OPCODE_BRANCH) ? 1'b0 : 1'b1;  // Only set for DP Imm, load, store, auipc, lui
+    always_comb begin : ALUSrcBBlock
+        case (Opcode)
+            OPCODE_DP_REG, OPCODE_BRANCH: ALUSrcB = 2'bx0;
+            OPCODE_JAL, OPCODE_JALR: ALUSrcB = 2'b01;
+            OPCODE_DP_IMM, OPCODE_LOAD, OPCODE_STORE,
+            OPCODE_AUIPC, OPCODE_LUI: ALUSrcB = 2'b11;
+            default: ALUSrcB = 2'bxx;
+        endcase
+    end
 
     always_comb begin : ImmSrcBlock
         case (Opcode)

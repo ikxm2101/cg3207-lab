@@ -31,11 +31,11 @@
 ----------------------------------------------------------------------------------
 */
 
-module PC_Logic( // This is a combinational module, unlike ARM. See the note below.
-	input [1:0] PCS,	    // 00 for non-control, 01 for conditional branch, 10 for jal, 11 for jalr
-	input [2:0] Funct3,	    // condition specified in the instruction (eq / ne / lt / ge / ltu / geu)
-	input [2:0] ALUFlags, 	// {eq, lt, ltu}
-	output logic PCSrc	    // will need to be expanded to 2 bits to support jalr
+module PC_Logic(                    // This is a combinational module, unlike ARM. See the note below.
+	input [1:0] PCS,	            // 00 for non-control, 01 for conditional branch, 10 for jal, 11 for jalr
+	input [2:0] Funct3,	            // condition specified in the instruction (eq / ne / lt / ge / ltu / geu)
+	input [2:0] ALUFlags, 	        // {eq, lt, ltu}
+	output logic [1:0] PCSrc	    // will need to be expanded to 2 bits to support jalr
     );
     
     /* 
@@ -52,34 +52,36 @@ module PC_Logic( // This is a combinational module, unlike ARM. See the note bel
     */
 
     /* PCS */
-    localparam NON_CONTROL = 2'b00;
-    localparam CONDITIONAL_BRANCH = 2'b01;
-    localparam JAL = 2'b10;
+    localparam PCS_NON_CONTROL = 2'b00;
+    localparam PCS_CONDITIONAL_BRANCH = 2'b01;
+    localparam PCS_JAL = 2'b10;
+    localparam PCS_JALR = 2'b11;
 
     /* CONDITIONAL_BRANCH Funct3 */
-    localparam BEQ = 3'b000;
-    localparam BNE = 3'b001;
-    localparam BLT = 3'b100;
-    localparam BGE = 3'b101;
-    localparam BLTU = 3'b110;
-    localparam BGEU = 3'b111;
+    localparam FUNCT3_BEQ = 3'b000;
+    localparam FUNCT3_BNE = 3'b001;
+    localparam FUNCT3_BLT = 3'b100;
+    localparam FUNCT3_BGE = 3'b101;
+    localparam FUNCT3_BLTU = 3'b110;
+    localparam FUNCT3_BGEU = 3'b111;
 
 	always_comb begin : PCSrcBlock
         case(PCS)
-            2'b00: PCSrc = 1'b0;
-            2'b10: PCSrc = 1'b1;
-            2'b01: begin
+            PCS_NON_CONTROL: PCSrc = 2'b00;
+            PCS_CONDITIONAL_BRANCH: begin
                 case (Funct3)
-                    BEQ: PCSrc = ALUFlags[2];
-                    BNE: PCSrc = ~ALUFlags[2];
-                    BLT: PCSrc = ALUFlags[1];
-                    BGE: PCSrc = ~ALUFlags[1];
-                    BLTU: PCSrc = ALUFlags[0];
-                    BGEU: PCSrc = ~ALUFlags[0];
-                    default: PCSrc = 1'bx;
+                    FUNCT3_BEQ: PCSrc = ALUFlags[2];
+                    FUNCT3_BNE: PCSrc = ~ALUFlags[2];
+                    FUNCT3_BLT: PCSrc = ALUFlags[1];
+                    FUNCT3_BGE: PCSrc = ~ALUFlags[1];
+                    FUNCT3_BLTU: PCSrc = ALUFlags[0];
+                    FUNCT3_BGEU: PCSrc = ~ALUFlags[0];
+                    default: PCSrc = 2'bxx;
                 endcase
             end
-            default: PCSrc = 1'bx;
+            PCS_JAL: PCSrc = 2'b10;
+            PCS_JALR: PCSrc = 2'b11;
+            default: PCSrc = 2'bxx;
         endcase
     end
 	

@@ -108,7 +108,7 @@ module RV(
     // wire MemWrite ;
     wire MemtoReg ;
     wire [1:0] ALUSrcA ;
-    wire ALUSrcB ;
+    wire [1:0] ALUSrcB ;
     // wire [2:0] ImmSrc ;
     wire [3:0] ALUControl ;
     
@@ -116,7 +116,7 @@ module RV(
     // wire [1:0] PCS
     // wire [2:0] Funct3;
     // wire [2:0] ALUFlags;
-    wire PCSrc;
+    wire [1:0] PCSrc;
       
     /* ALU signals */
     wire [31:0] Src_A ;
