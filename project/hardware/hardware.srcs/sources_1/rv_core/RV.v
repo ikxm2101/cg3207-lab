@@ -161,14 +161,31 @@ module RV(
     // v2: </Added to support lb/lbu/lh/lhu/sb/sh>
 
     // TODO: other datapath connections here
-    /* Program counter input */
-    assign PC_IN = (PCSrc == 1'b0) ? (PC + 4) : (PC + ExtImm);
+    /* === Fetch Stage === */
+    /* 
+     * Program counter input 
+     * PCSrc[0]:
+        * controls offset for PC+ : ExtImm(1) or 4(0)
+        * controls while pipeline stage info comes from : E(1) or F(0) 
 
-    /* ALU and MCycle inputs */
-    assign Src_A = (ALUSrcA[0] == 1'b0) ? RD1 : 
-                    (ALUSrcA[1] == 1'b0) ? 1'b0 : PC; // MCycle Operand1
-    assign Src_B = (ALUSrcB == 1'b1) ? ExtImm : RD2; // MCycle Operand2
+     * PCSrc[1] selects base for PC+ : RD1(1) or PC(0)
+    */
+    
+    assign PC_Offset = (PCSrc[0] == 1'b0) ? 4 : ExtImm;
 
+    wire [31:0] PC_Base;
+    assign PC_Base = (PCSrc[1] == 1'b0) ? PC : RD1;
+
+    assign PC_IN = PC_Base + PC_Offset;
+    /* === Execute Stage === */
+    /* ALU and MCycle inputs 
+     * Src_A == MCycle Operand1
+     * Src_B == MCycle Operand2
+    */
+    assign Src_A =  (ALUSrcA[0] == 1'b0) ? RD1 : 
+                    (ALUSrcA[1] == 1'b0) ? 1'b0 : PC;
+    assign Src_B =  (ALUSrcB[0] == 1'b0) ? RD2 :
+                    (ALUSrcB[1] == 1'b1) ? 4 : ExtImm;
     /* Data memory write data */
 	assign WriteData = RD2;
 
