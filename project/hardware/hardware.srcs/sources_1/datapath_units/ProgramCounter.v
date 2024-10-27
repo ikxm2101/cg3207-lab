@@ -34,7 +34,7 @@
 module ProgramCounter(
     input CLK,
     input RESET,
-    input PC_WE,    // write enable
+    input PC_WE,    // write enable, active low
     input [31:0] PC_IN,
     output reg [31:0] PC  
     );
@@ -51,7 +51,7 @@ module ProgramCounter(
     begin
         if(RESET)
             PC <= 32'h00000000; // Should be the same as the initial value above.
-        else if(PC_WE)
+        else if(~PC_WE) 
             PC <= PC_IN ;        
     end
     

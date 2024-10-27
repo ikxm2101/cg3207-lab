@@ -148,7 +148,9 @@ module RV(
     wire [31:0] Result ;
 
     assign MemRead = MemtoReg; // This is needed for the proper functionality of some devices such as UART CONSOLE
-    assign PC_WE = Busy ? 1'b0 : 1'b1; // Will need to control it for multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
+
+    // Will need to control it for multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
+    assign PC_WE = Busy ? 1'b1 : 1'b0;  // PC is active-low
     
     // v2: <Added to support lb/lbu/lh/lhu/sb/sh>
     assign ReadData = ReadData_in;       // Change datapath as appropriate if supporting lb/lbu/lh/lhu
