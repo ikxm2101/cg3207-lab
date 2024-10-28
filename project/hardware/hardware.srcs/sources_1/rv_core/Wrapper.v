@@ -431,9 +431,9 @@ RV RV1(
 	.ReadData_in(ReadData_in),
 	.MemRead(MemRead),
 	.MemWrite_out(MemWrite_out),
-	.PC(PC),
-	.ALUResult(ALUResult),
-	.WriteData_out(WriteData_out)
+	.ALUResult_out(ALUResult),
+	.WriteData_out(WriteData_out),
+	.PC(PC)
 );
 
 endmodule

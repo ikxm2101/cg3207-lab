@@ -79,7 +79,7 @@ module PC_Logic(                    // This is a combinational module, unlike AR
                     default: PCSrc = 2'bxx;
                 endcase
             end
-            PCS_JAL: PCSrc = 2'b10;
+            PCS_JAL: PCSrc = 2'b01;
             PCS_JALR: PCSrc = 2'b11;
             default: PCSrc = 2'bxx;
         endcase

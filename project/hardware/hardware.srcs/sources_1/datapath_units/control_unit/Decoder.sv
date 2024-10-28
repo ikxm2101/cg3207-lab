@@ -39,7 +39,7 @@ module Decoder(
     output logic RegWrite,		        // Asserted only by instructions which write to register file (load, auipc, lui, DPImm, DPReg);
     output logic MemWrite,		        // Asserted only by store (sw)
     output logic MemtoReg,		        // Asserted only by load (lw)
-    output logic [1:0] ALUSrcA,         // Needed for lui, auipic. Refer to the microarchitecture for its use. Uncomment wire and port map in RV.v as well
+    output logic [1:0] ALUSrcA,         // Needed for lui, auipc. Refer to the microarchitecture for its use. Uncomment wire and port map in RV.v as well
     output logic [1:0] ALUSrcB,		    // Asserted by all instructions which use an immediate (load, store, lui, auipc, DPImm). Needs to be expanded to a 2-bit signal to support link functionality for jal, jalr. Change wire width in RV.v as well
     output logic [2:0] ImmSrc, 	        // 000 for U, 010 for UJ, 011 for I, 110 for S, 111 for SB.
     output logic [3:0] ALUControl,	    // 0000 for add, 0001 for sub, 1110 for and, 1100 for or, 0010 for sll, 1010 for srl, 1011 for sra, 0001 for branch, 0000 for all others.
@@ -112,7 +112,7 @@ module Decoder(
     assign MemtoReg = (Opcode == OPCODE_LOAD) ? 1'b1 : 1'b0; // Only set for load
     assign MemWrite = (Opcode == OPCODE_STORE) ? 1'b1 : 1'b0; // Only set for store
 
-    assign RegWrite = (Opcode == OPCODE_STORE || Opcode == OPCODE_BRANCH || Opcode == OPCODE_JAL) ? 1'b0 : 1'b1; // Only set for DP Reg, DP Imm, load, auipc, lui
+    assign RegWrite = (Opcode == OPCODE_STORE || Opcode == OPCODE_BRANCH) ? 1'b0 : 1'b1; // Only set for DP Reg, DP Imm, load, auipc, lui, jal, jalr
 
     always_comb begin : PCSBlock
         case (Opcode) 
@@ -145,7 +145,7 @@ module Decoder(
 
     always_comb begin : ImmSrcBlock
         case (Opcode)
-            OPCODE_DP_IMM, OPCODE_LOAD: ImmSrc = 3'b011;
+            OPCODE_DP_IMM, OPCODE_LOAD, OPCODE_JALR: ImmSrc = 3'b011;
             OPCODE_AUIPC, OPCODE_LUI: ImmSrc = 3'b000;
             OPCODE_STORE: ImmSrc = 3'b110;
             OPCODE_BRANCH: ImmSrc = 3'b111;
