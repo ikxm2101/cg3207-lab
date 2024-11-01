@@ -98,21 +98,16 @@ module RV(
      * F stage register (PC) Signals 
      *****************************************/
     // Inputs
-    // wire [31:0] PC_IN
+    wire PC_WE ;
+    wire [31:0] PC_IN ;
     
     // Outputs
-    // wire [31:0] PC_F;
+    wire [31:0] PC_F; // ProgramCounter module already implements it as a reg
 
     /* ProgramCounter signals */
     // wire CLK ;
     // wire RESET ;
-    wire PC_WE ;    
-    wire [31:0] PC_IN ;
-    wire [31:0] PC_F; // ProgramCounter module already implements it as a reg
-
-    // Other signals in F stage
     wire [31:0] PC_Offset ;
-
 
     /*****************************************
      * D Stage Register Signals 
@@ -125,17 +120,17 @@ module RV(
     reg [31:0] PC_D;
 
     /* Decoder signals */
-    wire [6:0] Opcode ;
     wire [2:0] Funct3_D ;
+    wire [6:0] Opcode ;
     wire [6:0] Funct7 ;
     wire [1:0] PCS_D ;
     wire RegWrite_D ;
-    wire MemWrite_D ;
     wire MemtoReg_D ;
+    wire MemWrite_D ;
+    wire [3:0] ALUControl_D ;
     wire [1:0] ALUSrcA_D ;
     wire [1:0] ALUSrcB_D ;
     // wire [2:0] ImmSrc ;
-    wire [3:0] ALUControl_D ;
     wire MCycleStart_D;
     wire MCycle_ResultSelect_D;
     wire [1:0] MCycleOp_D;
@@ -162,11 +157,11 @@ module RV(
     // wire [2:0] Funct3_D;
     // wire [1:0] PCS_D;
     // wire RegWrite_D;
-    // wire MemWrite_D;
     // wire MemtoReg_D;
+    // wire MemWrite_D;
+    // wire [3:0] ALUControl_D;
     // wire [1:0] ALUSrcA_D;
     // wire [1:0] ALUSrcB_D;
-    // wire [3:0] ALUControl_D;
     // wire MCycleStart_D;
     // wire MCycle_ResultSelect_D;
     // wire [1:0] MCycleOp_D;
@@ -177,14 +172,14 @@ module RV(
     // reg [31:0] PC_D;
 
     // Outputs
-    reg [1:0] PCS_E;
     reg [2:0] Funct3_E;
+    reg [1:0] PCS_E;
     reg RegWrite_E;
     reg MemtoReg_E;
     reg MemWrite_E;
+    reg [3:0] ALUControl_E;
     reg [1:0] ALUSrcA_E;
     reg [1:0] ALUSrcB_E;
-    reg [3:0] ALUControl_E;
     reg MCycleStart_E;
     reg MCycle_ResultSelect_E;
     reg [1:0] MCycleOp_E;
@@ -210,7 +205,7 @@ module RV(
     /* MCycle signals */
     // wire CLK ;
     // wire RESET ;
-    wire MCycleStart ;
+    // wire MCycleStart_E ;
     // reg [1:0] MCycleOp_E ;
     wire [31:0] MCycle_Operand1 ;
     wire [31:0] MCycle_Operand2 ; 
@@ -239,13 +234,11 @@ module RV(
 
     /* Signals in M Stage */
     // v2: <Added to support lb/lbu/lh/lhu/sb/sh>
-    // reg MemtoReg_M;
+    wire [2:0] SizeSel;
     // reg MemWrite_M;
     // reg [31:0] ALUResult_M;
-    wire [31:0] ReadData_M;
     // reg [31:0] WriteData_M;
-    wire [2:0] SizeSel;
-    // v2: </Added to support lb/lbu/lh/lhu/sb/sh>
+    wire [31:0] ReadData_M;
 
 
     /*****************************************
@@ -280,7 +273,7 @@ module RV(
     /*****************************************
      * Fetch Pipeline Register (or PC register)
      *****************************************/
-    assign Instr_F = Instr;
+    assign Instr_F = Instr; // Get instruction from Wrapper module
 
     /* Instantiate ProgramCounter */    
     ProgramCounter IProgramCounter_1 (
@@ -304,15 +297,14 @@ module RV(
     */
     wire [31:0] PC_Base;
     
-    assign PC = PC_F;
-    assign PC_IN = PC_Base + PC_Offset;
+    assign PC_IN = PC_Offset + PC_Base;
     assign PC_Offset = (PCSrc_E[0] == 1'b0) ? 4 : ExtImm_E;
     assign PC_Base = (PCSrc_E[1] == 1'b0) ? 
-                    (PCSrc_E[0] == 1'b0) ? PC_F : PC_E
-                    : RD1_E;
-    // Will need to control it for multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
+                     ((PCSrc_E[0] == 1'b0) ? PC_F : PC_E) // Will choose PC_E if brancgh or jump
+                     : RD1_E;
+    // PC_WE for Multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
     assign PC_WE = Busy ? 1'b1 : 1'b0;  // PC is active-low
-    
+    assign PC = PC_F;                   // For output to wrapper
 
     /*****************************************
      * Decode Pipeline Register
@@ -326,13 +318,13 @@ module RV(
      * Decode Stage Datapath
      *****************************************/
     /* Instruction from instruction memory */
+	assign Funct3_D = Instr_D[14:12];
+	assign Opcode = Instr_D[6:0];
+	assign Funct7 = Instr_D[31:25];
 	assign rs1_D = Instr_D[19:15];
 	assign rs2_D = Instr_D[24:20];
 	assign rd_D = Instr_D[11:7];
 	assign InstrImm = Instr_D[31:7];
-	assign Funct3_D = Instr_D[14:12];
-	assign Funct7 = Instr_D[31:25];
-	assign Opcode = Instr_D[6:0];
 
     /* Instantiate Decoder */
     Decoder IDecoder_1 (
@@ -375,8 +367,8 @@ module RV(
      * Execute Pipeline Register
      *****************************************/
     always @(*) begin
-        PCS_E <= PCS_D;
         Funct3_E <= Funct3_D;
+        PCS_E <= PCS_D;
         RegWrite_E <= RegWrite_D;
         MemtoReg_E <= MemtoReg_D;
         MemWrite_E <= MemWrite_D;
@@ -440,14 +432,14 @@ module RV(
     assign MCycle_Operand1 = Src_A;
 
     assign Src_B =  (ALUSrcB_E[0] == 1'b0) ? RD2_E :
-                    (ALUSrcB_E[1] == 1'b1) ? 4 : ExtImm_E;
+                    (ALUSrcB_E[1] == 1'b0) ? 4 : ExtImm_E;
     assign MCycle_Operand2 = Src_B;
     /* 
      * ALUResult: result from ALU block (add, sub, and, or, sll, srl, sra)
      * MCycle_Result1: MCycle block (mul: LSW, div: Quotient)
      * MCycle_Result2: MCycle block (mul: MSW, div: Remainder)
     */
-    assign ALUResult_E =    MCycleStart_E ? // check if its a multi-cycle instruction
+    assign ALUResult_E = MCycleStart_E ? // check if its a multi-cycle instruction
                             (MCycle_ResultSelect_E ? MCycle_Result2 : MCycle_Result1) // select MCycle_Result based on the instruction
                             : ALUResult;
 
@@ -491,7 +483,7 @@ module RV(
     always @(*) begin
         RegWrite_W <= RegWrite_M;
         MemtoReg_W <= MemtoReg_M;
-        ReadData_W <= ReadData_in;
+        ReadData_W <= ReadData_M;
         ALUResult_W <= ALUResult_M;
         rd_W <= rd_M;
     end
