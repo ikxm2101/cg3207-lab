@@ -165,7 +165,7 @@ module RV(
     // wire [31:0] RD1_D;
     // wire [31:0] RD2_D;
     // wire [31:0] ExtImm_D;
-    // wire [4:0] rd_D;
+    wire [4:0] rd_D;
     // reg [31:0] PC_D;
 
     // Outputs
@@ -411,7 +411,7 @@ module RV(
     assign MCycle_Operand1 = Src_A;
 
     assign Src_B =  (ALUSrcB_E[0] == 1'b0) ? RD2_E :
-                    (ALUSrcB_E[1] == 1'b1) ? 4 : ExtImm_E;
+                    (ALUSrcB_E[1] == 1'b0) ? 4 : ExtImm_E;
     assign MCycle_Operand2 = Src_B;
     /* 
      * ALUResult: result from ALU block (add, sub, and, or, sll, srl, sra)
