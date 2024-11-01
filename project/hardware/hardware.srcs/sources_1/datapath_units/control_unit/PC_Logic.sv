@@ -70,12 +70,12 @@ module PC_Logic(                    // This is a combinational module, unlike AR
             PCS_NON_CONTROL: PCSrc = 2'b00;
             PCS_CONDITIONAL_BRANCH: begin
                 case (Funct3)
-                    FUNCT3_BEQ: PCSrc = ALUFlags[2];
-                    FUNCT3_BNE: PCSrc = ~ALUFlags[2];
-                    FUNCT3_BLT: PCSrc = ALUFlags[1];
-                    FUNCT3_BGE: PCSrc = ~ALUFlags[1];
-                    FUNCT3_BLTU: PCSrc = ALUFlags[0];
-                    FUNCT3_BGEU: PCSrc = ~ALUFlags[0];
+                    FUNCT3_BEQ: PCSrc = {1'b0, ALUFlags[2]};
+                    FUNCT3_BNE: PCSrc = {1'b0, ~ALUFlags[2]};
+                    FUNCT3_BLT: PCSrc = {1'b0, ALUFlags[1]};
+                    FUNCT3_BGE: PCSrc = {1'b0, ~ALUFlags[1]};
+                    FUNCT3_BLTU: PCSrc = {1'b0, ALUFlags[0]};
+                    FUNCT3_BGEU: PCSrc = {1'b0, ~ALUFlags[0]};
                     default: PCSrc = 2'bxx;
                 endcase
             end
