@@ -22,89 +22,67 @@ init:
     nop
     nop
     sw zero, (s1)
-    li t0, 96
+    li t0, -96
     li t1, 10
+    li t2, 106
+    li t3, 0
+    
+test_beq:
+    beq t1, t1, test_bne
     nop
     nop
+    nop
+    nop
+    sw t3, (s1) # Should not print 0
 
-test_sub:
-    sub t2, t0, t1
-    nop
-    nop
-    jal display_result
+test_bne:
+    bne t1, t1, test_blt
     nop
     nop
     nop
     nop
+    addi t3, t3, 1
+    nop
+    nop
+    sw t3, (s1) # Print 1
+    
+test_blt:
+    blt t0, t1, test_bge
+    nop
+    nop
+    nop
+    nop
+    sw t3, (s1) # Should not print 1
 
-test_add:
-    add t2, t0, t1
-    nop
-    nop
-    jal display_result
+test_bge:
+    bge t0, t1, test_bltu
     nop
     nop
     nop
     nop
-    blt t0, t1, test_or
+    addi t3, t3, 1
+    nop
+    nop
+    sw t3, (s1) # Print 2 
+
+test_bltu:
+    bltu t1, t2, test_bgeu
     nop
     nop
     nop
     nop
-    
-test_and:
-    and t2, t0, t1
-    nop
-    nop
-    jal display_result
-    nop
-    nop
-    nop
-    nop
-    
-test_or:
-    or t2, t0, t1
-    nop
-    nop
-    jal display_result
+    sw t3, (s1) # Should not print 2
+
+test_bgeu:
+    bgeu t1, t2, end 
     nop
     nop
     nop
     nop
-    blt t1, t0, test_srl
-    
-test_sll:
-    li t1, 2
+    addi t3, t3, 1
     nop
     nop
-    sll t2, t0, t1
-    nop
-    nop
-    jal display_result
-    nop
-    nop
-    nop
-    nop
-    
-test_srl:
-    srl t2, t0, t1
-    nop
-    nop
-    jal display_result
-    nop
-    nop
-    nop
-    nop
-    
-test_sra:
-    sra t2, t0, t1
-    nop
-    nop
-    jal display_result
-    nop
-    nop
-    nop
-    nop
+    sw t3, (s1) # print 3
     
 end:
     jal init
@@ -112,15 +90,10 @@ end:
     nop
     nop
     nop
-display_result:
-    sw t2, (s1)
-    nop
-    nop
-    jalr zero, ra, 0
-    nop
-    nop
-    nop
-    nop
+    
+    
+    
+    
 
 
 
