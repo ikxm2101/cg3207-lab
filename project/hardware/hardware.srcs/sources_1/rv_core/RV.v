@@ -294,9 +294,14 @@ module RV(
     assign Instr_F = Instr;
 
     /* === Decode Pipeline Register === */
-    always @(*) begin
-        Instr_D <= Instr_F;
-        PC_D <= PC_F;
+    always @(posedge CLK or posedge RESET) begin
+        if (RESET) begin
+            Instr_D <= 32'h0;
+            PC_D <= 32'h0;
+        end else begin
+            Instr_D <= Instr_F;
+            PC_D <= PC_F;
+        end
     end
 
     /* === Decode Stage === */
@@ -347,23 +352,42 @@ module RV(
     );
 
     /* === Execute Pipeline Register === */
-    always @(*) begin
-        PCS_E <= PCS_D;
-        Funct3_E <= Funct3_D;
-        RegWrite_E <= RegWrite_D;
-        MemtoReg_E <= MemtoReg_D;
-        MemWrite_E <= MemWrite_D;
-        ALUSrcA_E <= ALUSrcA_D;
-        ALUSrcB_E <= ALUSrcB_D;
-        ALUControl_E <= ALUControl_D;
-        MCycleStart_E <= MCycleStart_D;
-        MCycle_ResultSelect_E <= MCycle_ResultSelect_D;
-        MCycleOp_E <= MCycleOp_D;
-        RD1_E <= RD1_D;
-        RD2_E <= RD2_D;
-        ExtImm_E <= ExtImm_D;
-        rd_E <= rd_D;
-        PC_E <= PC_D;
+    always @(posedge CLK or posedge RESET) begin
+        if (RESET) begin
+            PCS_E <= 2'b00;
+            Funct3_E <= 3'b000;
+            RegWrite_E <= 1'b0;
+            MemtoReg_E <= 1'b0;
+            MemWrite_E <= 1'b0;
+            ALUSrcA_E <= 2'b00;
+            ALUSrcB_E <= 2'b00;
+            ALUControl_E <= 4'b0000;
+            MCycleStart_E <= 1'b0;
+            MCycle_ResultSelect_E <= 1'b0;
+            MCycleOp_E <= 2'b00;
+            RD1_E <= 32'h0;
+            RD2_E <= 32'h0;
+            ExtImm_E <= 32'h0;
+            rd_E <= 5'h0;
+            PC_E <= 32'h0;
+        end else begin
+            PCS_E <= PCS_D;
+            Funct3_E <= Funct3_D;
+            RegWrite_E <= RegWrite_D;
+            MemtoReg_E <= MemtoReg_D;
+            MemWrite_E <= MemWrite_D;
+            ALUSrcA_E <= ALUSrcA_D;
+            ALUSrcB_E <= ALUSrcB_D;
+            ALUControl_E <= ALUControl_D;
+            MCycleStart_E <= MCycleStart_D;
+            MCycle_ResultSelect_E <= MCycle_ResultSelect_D;
+            MCycleOp_E <= MCycleOp_D;
+            RD1_E <= RD1_D;
+            RD2_E <= RD2_D;
+            ExtImm_E <= ExtImm_D;
+            rd_E <= rd_D;
+            PC_E <= PC_D;
+        end
     end
 
     /* === Execute Stage === */
@@ -425,13 +449,22 @@ module RV(
     assign WriteData_E = RD2_E; 
                         
     /* === Memory Pipeline Register === */
-    always @(*) begin
-        RegWrite_M <= RegWrite_E;
-        MemtoReg_M <= MemtoReg_E;
-        MemWrite_M <= MemWrite_E;
-        ALUResult_M <= ALUResult_E;
-        WriteData_M <= WriteData_E;
-        rd_M <= rd_E;
+    always @(posedge CLK or posedge RESET) begin
+        if (RESET) begin
+            RegWrite_M <= 1'b0;
+            MemtoReg_M <= 1'b0;
+            MemWrite_M <= 1'b0;
+            ALUResult_M <= 32'h0;
+            WriteData_M <= 32'h0;
+            rd_M <= 5'h0;
+        end else begin
+            RegWrite_M <= RegWrite_E;
+            MemtoReg_M <= MemtoReg_E;
+            MemWrite_M <= MemWrite_E;
+            ALUResult_M <= ALUResult_E;
+            WriteData_M <= WriteData_E;
+            rd_M <= rd_E;
+        end
     end
 
     /* === Memory Stage === */
@@ -452,12 +485,20 @@ module RV(
     // v2: </Added to support lb/lbu/lh/lhu/sb/sh>
 
     /* === Writeback Pipeline Register === */
-    always @(*) begin
-        RegWrite_W <= RegWrite_M;
-        MemtoReg_W <= MemtoReg_M;
-        ReadData_W <= ReadData_in;
-        ALUResult_W <= ALUResult_M;
-        rd_W <= rd_M;
+    always @(posedge CLK or posedge RESET) begin
+        if (RESET) begin
+            RegWrite_W <= 1'b0;
+            MemtoReg_W <= 1'b0;
+            ReadData_W <= 32'h0;
+            ALUResult_W <= 32'h0;
+            rd_W <= 5'h0;
+        end else begin
+            RegWrite_W <= RegWrite_M;
+            MemtoReg_W <= MemtoReg_M;
+            ReadData_W <= ReadData_in;
+            ALUResult_W <= ALUResult_M;
+            rd_W <= rd_M;
+        end
     end
 
     /* === Writeback Stage === */
