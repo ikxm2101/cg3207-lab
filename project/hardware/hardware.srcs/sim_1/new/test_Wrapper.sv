@@ -133,11 +133,11 @@ module test_Wrapper #(
 	// localparam LED_PC_WAIT_X2 = 7'b011_1010;
 	// localparam LED_PC_WAIT_Y2 = 7'b100_0100;
 	
-	// To verify overall functionality with lab3_backup.asm
-	localparam LED_PC_MAIN = 7'b000_0000;
-	localparam LED_PC_WAIT_X = 7'b010_0010;
-	localparam LED_PC_WAIT_Y = 7'b010_1010;
-	localparam LED_PC_DISPLAY_LOOP = 7'b011_0100;
+	// To verify overall functionality with lab3_backup.a	sm
+	localparam LED_PC_MAIN = 7'h00;
+	localparam LED_PC_WAIT_X = 7'h22;
+	localparam LED_PC_WAIT_Y = 7'h2a;
+	localparam LED_PC_DISPLAY_LOOP = 7'h34;
 	
 	/* Testbench stimuli */
     initial begin
@@ -155,8 +155,6 @@ module test_Wrapper #(
 		$monitor("Time= %t, SEVENSEGHEX: %d", $time, SEVENSEGHEX);
 
 		$monitor("Time= %t, UART_RX: %d", $time, UART_RX);
-		// $monitor("Time= %t, UART_TX: %s", $time, UART_TX);
-		// $monitor("Time= %t, UART_TXputString: %s", $time, UART_TXputString);
 
 		// TODO: Insert rest of the stimuli here
 		/*
