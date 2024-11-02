@@ -211,7 +211,7 @@ module RV(
     wire [31:0] MCycle_Operand2 ; 
     wire [31:0] MCycle_Result1 ;
     wire [31:0] MCycle_Result2 ;
-    wire Busy ;
+    wire MCycle_Busy ;
 
     /*****************************************
      * M Stage Register Signals 
@@ -302,7 +302,7 @@ module RV(
                      ((PCSrc_E[0] == 1'b0) ? PC_F : PC_E) // Will choose PC_E if brancgh or jump
                      : RD1_E;
     // PC_WE for Multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
-    assign PC_WE = Busy ? 1'b1 : 1'b0;  // PC is active-low
+    assign PC_WE = MCycle_Busy ? 1'b1 : 1'b0;  // PC is active-low
     assign PC = PC_F;                   // For output to wrapper
 
     /*****************************************
@@ -312,7 +312,7 @@ module RV(
         if (RESET) begin
             Instr_D <= 32'h0;
             PC_D <= 32'h0;
-        end else if (Busy) begin
+        end else if (MCycle_Busy) begin
             Instr_D <= Instr_D;
             PC_D <= PC_D;
         end
@@ -392,7 +392,7 @@ module RV(
             ExtImm_E <= 32'h0;
             rd_E <= 5'h0;
             PC_E <= 32'h0;
-        end else if (Busy) begin
+        end else if (MCycle_Busy) begin
             PCS_E <= PCS_E;
             Funct3_E <= Funct3_E;
             RegWrite_E <= RegWrite_E;
@@ -464,7 +464,7 @@ module RV(
         .Operand2(MCycle_Operand2),
         .MCycle_Result1(MCycle_Result1),
         .MCycle_Result2(MCycle_Result2),
-        .Busy(Busy)
+        .MCycle_Busy(MCycle_Busy)
     );
 
     /*
@@ -500,7 +500,7 @@ module RV(
             ALUResult_M <= 32'h0;
             WriteData_M <= 32'h0;
             rd_M <= 5'h0;
-        end else if (Busy) begin
+        end else if (MCycle_Busy) begin
             RegWrite_M <= RegWrite_M;
             MemtoReg_M <= MemtoReg_M ;
             MemWrite_M <= MemWrite_M;
@@ -546,7 +546,7 @@ module RV(
             ReadData_W <= 32'h0;
             ALUResult_W <= 32'h0;
             rd_W <= 5'h0;
-        end else if (Busy) begin
+        end else if (MCycle_Busy) begin
             RegWrite_W <= RegWrite_W;
             MemtoReg_W <= MemtoReg_W;
             ReadData_W <= ReadData_W;

@@ -43,11 +43,11 @@ module MCycle #(
     input [width-1:0] Operand2, // Multiplier / Divisor
     output reg [width-1:0] MCycle_Result1, // LSW of Product / Quotient
     output reg [width-1:0] MCycle_Result2, // MSW of Product / Remainder
-    output reg Busy // Set immediately when Start is set. Cleared when the Results become ready. This bit can be used to stall the processor while multi-cycle operations are on.
+    output reg MCycle_Busy // Set immediately when Start is set. Cleared when the Results become ready. This bit can be used to stall the processor while multi-cycle operations are on.
     );
     
-// use the Busy signal to reset WE_PC to 0 in ARM.v (aka "freeze" PC). The two signals are complements of each other
-// since the IDLE_PROCESS is combinational, instantaneously asserts Busy once Start is asserted
+// use the MCycle_Busy signal to reset WE_PC to 0 in ARM.v (aka "freeze" PC). The two signals are complements of each other
+// since the IDLE_PROCESS is combinational, instantaneously asserts MCycle_Busy once Start is asserted
   
     parameter IDLE = 1'b0 ;  // will cause a warning which is ok to ignore - [Synth 8-2507] parameter declaration becomes local in MCycle with formal parameter declaration list...
 
@@ -68,7 +68,7 @@ module MCycle #(
     always@( state, done, Start, RESET ) begin : IDLE_PROCESS  
 		// Note : This block uses non-blocking assignments to get around an unpredictable Verilog simulation behaviour.
         // default outputs
-        Busy <= 1'b0 ;
+        MCycle_Busy <= 1'b0 ;
         n_state <= IDLE ;
         
         // reset
@@ -77,13 +77,13 @@ module MCycle #(
                 IDLE: begin
                     if(Start) begin // note: a mealy machine, since output depends on current state (IDLE) & input (Start)
                         n_state <= COMPUTING ;
-                        Busy <= 1'b1 ;
+                        MCycle_Busy <= 1'b1 ;
                     end
                 end
                 COMPUTING: begin
                     if(~done) begin
                         n_state <= COMPUTING ;
-                        Busy <= 1'b1 ;
+                        MCycle_Busy <= 1'b1 ;
                     end
                 end        
             endcase    
