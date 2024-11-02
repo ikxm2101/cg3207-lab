@@ -43,11 +43,11 @@ module MCycle #(
     input [width-1:0] Operand2, // Multiplier / Divisor
     output reg [width-1:0] MCycle_Result1, // LSW of Product / Quotient
     output reg [width-1:0] MCycle_Result2, // MSW of Product / Remainder
-    output reg Busy // Set immediately when Start is set. Cleared when the Results become ready. This bit can be used to stall the processor while multi-cycle operations are on.
+    output reg MCycle_Busy // Set immediately when Start is set. Cleared when the Results become ready. This bit can be used to stall the processor while multi-cycle operations are on.
     );
     
-// use the Busy signal to reset WE_PC to 0 in ARM.v (aka "freeze" PC). The two signals are complements of each other
-// since the IDLE_PROCESS is combinational, instantaneously asserts Busy once Start is asserted
+// use the MCycle_Busy signal to reset WE_PC to 0 in ARM.v (aka "freeze" PC). The two signals are complements of each other
+// since the IDLE_PROCESS is combinational, instantaneously asserts MCycle_Busy once Start is asserted
   
     parameter IDLE = 1'b0 ;  // will cause a warning which is ok to ignore - [Synth 8-2507] parameter declaration becomes local in MCycle with formal parameter declaration list...
 
@@ -60,15 +60,16 @@ module MCycle #(
     reg [2*width-1:0] temp_sum = 0 ;
     reg [2*width-1:0] shifted_op1 = 0 ;
     reg [2*width-1:0] shifted_op2 = 0 ;   
-    reg [width*2:0] A = 0;
-    reg [width*2:0] S = 0;
-    reg [width*2:0] P = 0;
+    reg [width*2+1:0] A = 0;
+    reg [width*2+1:0] S = 0;
+    reg [width*2+1:0] P = 0;
     reg result_sign = 0; // 0: positive, 1: negative  
+    reg [width:0] m = 0;
 
     always@( state, done, Start, RESET ) begin : IDLE_PROCESS  
 		// Note : This block uses non-blocking assignments to get around an unpredictable Verilog simulation behaviour.
         // default outputs
-        Busy <= 1'b0 ;
+        MCycle_Busy <= 1'b0 ;
         n_state <= IDLE ;
         
         // reset
@@ -77,13 +78,13 @@ module MCycle #(
                 IDLE: begin
                     if(Start) begin // note: a mealy machine, since output depends on current state (IDLE) & input (Start)
                         n_state <= COMPUTING ;
-                        Busy <= 1'b1 ;
+                        MCycle_Busy <= 1'b1 ;
                     end
                 end
                 COMPUTING: begin
                     if(~done) begin
                         n_state <= COMPUTING ;
-                        Busy <= 1'b1 ;
+                        MCycle_Busy <= 1'b1 ;
                     end
                 end        
             endcase    
@@ -106,10 +107,11 @@ module MCycle #(
              * signed: sign extend by msb
              * unsigned: sign extend by zero
             */
-            if (MCycleOp == 2'b00) begin
-                A = {Operand1, {width{1'b0}}, 1'b0};
-                S = {~Operand1+1, {width{1'b0}}, 1'b0};
-                P = {{width{1'b0}}, Operand2, 1'b0};
+            if (MCycleOp == 2'b00) begin // If signed multiply, Booth's algo
+                m = {Operand1[width-1], Operand1};
+                A = {m, {width{1'b0}}, 1'b0};
+                S = {~m + 1, {width{1'b0}}, 1'b0};
+                P = {1'b0, {width{1'b0}}, Operand2, 1'b0};
             end else begin
                 shifted_op1 = { {width{~MCycleOp[0] & Operand1[width-1]}}, Operand1 } ;   
                 shifted_op2 = { {width{~MCycleOp[0] & Operand2[width-1]}}, Operand2 } ; 
@@ -146,7 +148,7 @@ module MCycle #(
                 shifted_op1 = {shifted_op1[2*width-2 : 0], 1'b0} ;    
                     
                 // If (Unsigned Multiply and last) | (Signed Multiple and last)
-                if( (MCycleOp[0] & count == width-1) | (~MCycleOp[0] & count == 2*width-1) ) // last cycle?
+                if( (MCycleOp[0] & count == width-1) | (~MCycleOp[0] & count == 2*width-1) )
                     done <= 1'b1 ;   
                 
                 count = count + 1;    
@@ -157,28 +159,16 @@ module MCycle #(
                     default: ;
                 endcase
                 
-                P = {P[width*2], P[width*2:1]};
-                // case(shifted_op2[1:0])
-                //     2'b01: temp_sum = temp_sum + shifted_op1[width-1:0]; // Add shifted_op1 when the pair is '01'
-                //     2'b10: temp_sum = temp_sum - shifted_op1[width-1:0]; // Subtract shifted_op1 when the pair is '10'
-                //     default: ; // No operation for '00' or '11'
-                // endcase
-                
-                // // Arithmetic right shift of the multiplier and product (shift both multiplier and product together)
-                // shifted_op2 = {temp_sum[0], shifted_op2[width:1]}; // Arithmetic right shift
-                // temp_sum = {temp_sum[2*width-1], temp_sum[2*width-1:1]}; 
+                P = {P[width*2+1], P[width*2+1:1]};
                 
                 // Check if the Booth multiplication is complete after width cycles
                 count = count + 1;
                 if(count == width) begin
                     done <= 1'b1;
                 end
-
-
             end         
         end    
-        else begin // Supposed to be Divide. Change this to signed [ if(~MCycleOp[0]) ] and unsigned [ if(MCycleOp[0]) ] division.
-
+        else begin
             // Op1: dividend; Op2: divisor; Result = Op1/Op2
             if (shifted_op1 >= shifted_op2) begin
                 shifted_op1 = shifted_op1 - shifted_op2;
@@ -186,15 +176,6 @@ module MCycle #(
             end else begin
                 temp_sum = {temp_sum[width*2-2 : 0], 1'b0};
             end
-
-            // This is taken from lecture notes implementation
-            // shifted_op1 = shifted_op1 - shifted_op2;
-            // if (shifted_op1[width*2-1] == 1) begin
-            //     shifted_op1 = shifted_op1 + shifted_op2;    // Restore original dividend
-            //     temp_sum = {temp_sum[width*2-2 : 0], 1'b0};   // Shift left quotient
-            // end else begin
-            //     temp_sum = {temp_sum[width*2-2 : 0], 1'b1};   // Shift left quotient
-            // end
 
             shifted_op2 = {1'b0, shifted_op2[width*2-1 : 1]}; // Shift right divisor
 
@@ -206,16 +187,15 @@ module MCycle #(
                 temp_sum[2*width-1 : width] = shifted_op1[width-1 : 0]; // Append remainder
                 done <= 1'b1;
             end
-
             count = count + 1;        
         end
         
-        if (MCycleOp == 2'b00) begin
-            MCycle_Result2 <= P[2*width : width+1] ;    // Or remainder
+        if (MCycleOp == 2'b00) begin // Signed multiplication with Booth's Algorithm
+            MCycle_Result2 <= P[2*width : width+1] ;            
             MCycle_Result1 <= P[width : 1] ;   
         end else begin
-            MCycle_Result2 <= temp_sum[2*width-1 : width] ;    // Or remainder
-            MCycle_Result1 <= temp_sum[width-1 : 0] ;          // Or quotient 
+            MCycle_Result2 <= temp_sum[2*width-1 : width] ;     // Or remainder
+            MCycle_Result1 <= temp_sum[width-1 : 0] ;           // Or quotient 
         end
 
     end

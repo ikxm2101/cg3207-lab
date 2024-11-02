@@ -5,11 +5,11 @@
 -- Engineer: (c) Rajesh Panicker  
 -- 
 -- Create Date: 09/22/2020 06:49:10 PM
--- Module Name: ProgramCounter
+-- Module Name: RegFile
 -- Project Name: CG3207 Project
 -- Target Devices: Nexys 4 / Basys 3
 -- Tool Versions: Vivado 2019.2
--- Description: RISC-V Processor Program Counter Module
+-- Description: RISC-V Processor Register File Module
 -- 
 -- Dependencies: NIL
 -- 
@@ -31,31 +31,40 @@
 ----------------------------------------------------------------------------------
 */
 
-module ProgramCounter(
+module RegFile(
     input CLK,
-    input RESET,
-    input PC_WE,    // write enable
-    input [31:0] PC_IN,
-    output reg [31:0] PC  
+    input WE,
+    input [4:0] rs1,
+    input [4:0] rs2,
+    input [4:0] rd,
+    input [31:0] WD,
+    output reg [31:0] RD1,
+    output reg [31:0] RD2
     );
     
-    //Perhaps pass the default PC value as a parameter from Wrapper. For future.
-    // V2: Initialization for PC.
-    initial begin 
-        PC <= 32'h00000000; // Should be the same as INSTR_MEM_BASE in Wrapper.v, 
-        					//  and the .txt starting address in RARS Memory Configuration.
-        					// RARS default = 32'h00400000. It is 32'h00000000 for compact memory configuration with .txt at 0
-    end
-    
-    always@( posedge CLK )
+    // declare RegBank
+    reg [31:0] RegBank[0:31] ;
+        // 32 addresses, each a 32-bit word
+        // (1 to 31) is sufficient as R15 is not stored. Kept it as (0 to 31) just to supress a warning
+		
+    // read
+    always@(*)	// change to @posedge CLK only if using synch read. In that case, the output is RD1E, RD2E directly
     begin
-        if(RESET)
-            PC <= 32'h00000000; // Should be the same as the initial value above.
-        else if(PC_WE)
-            PC <= PC_IN ;        
+    	RD1 <= (rs1 == 5'b00000) ? 32'd0 : RegBank[rs1] ; 
+    	RD2 <= (rs2 == 5'b00000) ? 32'd0 : RegBank[rs2] ;  
+    end 
+    
+    // write
+    always@(posedge CLK)
+    begin
+        if((rd != 5'b00000) & (WE))
+            RegBank[rd] <= WD ;
     end
     
 endmodule
+
+
+
 
 
 

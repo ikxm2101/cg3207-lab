@@ -5,11 +5,11 @@
 -- Engineer: (c) Rajesh Panicker  
 -- 
 -- Create Date: 09/22/2020 06:49:10 PM
--- Module Name: CondLogic
+-- Module Name: ProgramCounter
 -- Project Name: CG3207 Project
 -- Target Devices: Nexys 4 / Basys 3
 -- Tool Versions: Vivado 2019.2
--- Description: RISC-V Processor Conditional Logic Module
+-- Description: RISC-V Processor Program Counter Module
 -- 
 -- Dependencies: NIL
 -- 
@@ -31,28 +31,31 @@
 ----------------------------------------------------------------------------------
 */
 
-module CondLogic( // This is a combinational module, unlike ARM. See the note below.
-    input PCS,
-    input Jump, 			// unconditional branch (jump) - just pass PCS to PCSrc when Jump is asserted
-    input [2:0] Funct3,		// condition specified in the instruction (eq / ne / lt / ge / ltu / geu)
-    input [2:0] ALUFlags, 	// {eq, lt, ltu}
-    output reg PCSrc
+module ProgramCounter(
+    input CLK,
+    input RESET,
+    input WE_PC,    // write enable
+    input [31:0] PC_IN,
+    output reg [31:0] PC  
     );
     
-    /* 
-    	Important Note : ALUFlags are not *stored* in flag registers in RISC-V, unlike ARM and most other processors.
-    	In RISC-V, the flags are produced and consumed in the same branch instruction. 
-    	The effect of CMP R1, R2 and BEQ LABEL in ARM is beq x1, x2, LABEL in RISC-V.
-    */
+    //Perhaps pass the default PC value as a parameter from Wrapper. For future.
+    // V2: Initialization for PC.
+    initial begin 
+        PC <= 32'h00000000; // Should be the same as INSTR_MEM_BASE in Wrapper.v, 
+        					//  and the .txt starting address in RARS Memory Configuration.
+        					// RARS default = 32'h00400000. It is 32'h00000000 for compact memory configuration with .txt at 0
+    end
     
+    always@( posedge CLK )
+    begin
+        if(RESET)
+            PC <= 32'h00000000; // Should be the same as the initial value above.
+        else if(WE_PC)
+            PC <= PC_IN ;        
+    end
     
-	// todo: conditional logic goes here
-	
-	
 endmodule
-
-
-
 
 
 

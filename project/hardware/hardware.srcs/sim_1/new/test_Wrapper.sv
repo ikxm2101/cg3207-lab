@@ -28,12 +28,12 @@ module test_Wrapper #(
 	wire [N_LEDs_OUT-1:0] LED_OUT;
 	wire [6:0] LED_PC;			
 	wire [31:0] SEVENSEGHEX;	
-	wire [7:0] CONSOLE_OUT;
-	reg  CONSOLE_OUT_ready = 0;
-	wire CONSOLE_OUT_valid;
-	reg  [7:0] CONSOLE_IN = 0;
-	reg  CONSOLE_IN_valid = 0;
-	wire CONSOLE_IN_ack;
+	wire [7:0] UART_TX;
+	reg  UART_TX_ready = 0;
+	wire UART_TX_valid;
+	reg  [7:0] UART_RX = 0;
+	reg  UART_RX_valid = 0;
+	wire UART_RX_ack;
 	reg  RESET = 0;					
 	reg  CLK = 0;				
 	
@@ -44,12 +44,12 @@ module test_Wrapper #(
 		.LED_OUT(LED_OUT), 
 		.LED_PC(LED_PC), 
 		.SEVENSEGHEX(SEVENSEGHEX), 
-		.CONSOLE_OUT(CONSOLE_OUT), 
-		.CONSOLE_OUT_ready(CONSOLE_OUT_ready), 
-		.CONSOLE_OUT_valid(CONSOLE_OUT_valid), 
-		.CONSOLE_IN(CONSOLE_IN), 
-		.CONSOLE_IN_valid(CONSOLE_IN_valid), 
-		.CONSOLE_IN_ack(CONSOLE_IN_ack), 
+		.UART_TX(UART_TX), 
+		.UART_TX_ready(UART_TX_ready), 
+		.UART_TX_valid(UART_TX_valid), 
+		.UART_RX(UART_RX), 
+		.UART_RX_valid(UART_RX_valid), 
+		.UART_RX_ack(UART_RX_ack), 
 		.RESET(RESET), 
 		.CLK(CLK)
 	);
@@ -80,35 +80,35 @@ module test_Wrapper #(
 		DIP = dip_value;
   	endtask
 
-	task automatic CONSOLE_TransmitString(input string str);
+	task automatic UART_TransmitString(input string str);
 		/* Sequence of signals for UART input:
-			* 1. Write an input to CONSOLE_IN
-			* 2. Set CONSOLE_IN_valid to 1
-			* 3. Wait for CONSOLE_IN_ack to be 1
-			* 4. Wait for CONSOLE_IN_ack to be 0
-			* 4. Set CONSOLE_IN_valid to 0
+			* 1. Write an input to UART_RX
+			* 2. Set UART_RX_valid to 1
+			* 3. Wait for UART_RX_ack to be 1
+			* 4. Wait for UART_RX_ack to be 0
+			* 4. Set UART_RX_valid to 0
 		*/
 		for (int i = 0; i < str.len(); i++) begin
-			CONSOLE_IN = str[i];
-			CONSOLE_IN_valid = 1'b1;
-			wait(CONSOLE_IN_ack);
-			wait(~CONSOLE_IN_ack);
-			CONSOLE_IN_valid = 1'b0;
+			UART_RX = str[i];
+			UART_RX_valid = 1'b1;
+			wait(UART_RX_ack);
+			wait(~UART_RX_ack);
+			UART_RX_valid = 1'b0;
 		end
 
 		// Send carriage return, '\r' to indicate end of string
-		CONSOLE_IN = 8'h0D; // '\r'
-        CONSOLE_IN_valid = 1'b1;
-        wait(CONSOLE_IN_ack);
-        wait(~CONSOLE_IN_ack);
-        CONSOLE_IN_valid = 1'b0;
+		UART_RX = 8'h0D; // '\r'
+        UART_RX_valid = 1'b1;
+        wait(UART_RX_ack);
+        wait(~UART_RX_ack);
+        UART_RX_valid = 1'b0;
 	endtask
 
-	string CONSOLE_OutputString = "";
-	task automatic CONSOLE_ReceiveString();
+	string UART_TXString = "";
+	task automatic UART_ReceiveString();
 		while (LED_PC != LED_PC_MAIN) begin
-			@(CONSOLE_OUT) begin
-				CONSOLE_OutputString = {CONSOLE_OutputString, string'(CONSOLE_OUT)};
+			@(UART_TX) begin
+				UART_TXString = {UART_TXString, string'(UART_TX)};
 			end
 		end
 	endtask
@@ -133,11 +133,11 @@ module test_Wrapper #(
 	// localparam LED_PC_WAIT_X2 = 7'b011_1010;
 	// localparam LED_PC_WAIT_Y2 = 7'b100_0100;
 	
-	// To verify overall functionality with lab3_backup.asm
-	localparam LED_PC_MAIN = 7'b000_0000;
-	localparam LED_PC_WAIT_X = 7'b010_0010;
-	localparam LED_PC_WAIT_Y = 7'b010_1010;
-	localparam LED_PC_DISPLAY_LOOP = 7'b011_0100;
+	// To verify overall functionality with lab3_backup.a	sm
+	localparam LED_PC_MAIN = 7'h00;
+	localparam LED_PC_WAIT_X = 7'h22;
+	localparam LED_PC_WAIT_Y = 7'h2a;
+	localparam LED_PC_DISPLAY_LOOP = 7'h34;
 	
 	/* Testbench stimuli */
     initial begin
@@ -146,25 +146,23 @@ module test_Wrapper #(
 		DIP = 16'h0000;
 
 		/* 
-		 * OK to keep CONSOLE_OUT_ready high continously in the testbench.
+		 * OK to keep UART_TX_ready high continously in the testbench.
 		 * In reality, it will be high only if UART is ready to send a data to PC
 		*/
-		CONSOLE_OUT_ready = 1'h1;
+		UART_TX_ready = 1'h1;
 		// $monitor("Time= %t, RegBank: %p", $time, dut.RV1.IRegFile1.RegBank);
 
 		$monitor("Time= %t, SEVENSEGHEX: %d", $time, SEVENSEGHEX);
 
-		$monitor("Time= %t, CONSOLE_IN: %d", $time, CONSOLE_IN);
-		// $monitor("Time= %t, CONSOLE_OUT: %s", $time, CONSOLE_OUT);
-		// $monitor("Time= %t, CONSOLE_OutputString: %s", $time, CONSOLE_OutputString);
+		$monitor("Time= %t, UART_RX: %d", $time, UART_RX);
 
 		// TODO: Insert rest of the stimuli here
 		/*
 		 * User inputs:
-		 	* CONSOLE_IN:
+		 	* UART_RX:
 
 		 * User outputs: 
-		 	* CONSOLE_OUT:
+		 	* UART_TX:
 		*/
 		
 		/* Reset the processor */
@@ -179,25 +177,25 @@ module test_Wrapper #(
 		
 		/* Verifies overall functionality with lab3.asm */
 		// wait(LED_PC == LED_PC_WAIT_X1);
-		// CONSOLE_TransmitString("1");
+		// UART_TransmitString("1");
 
 		// wait(LED_PC == LED_PC_WAIT_Y1);
-		// CONSOLE_TransmitString("1");
+		// UART_TransmitString("1");
 
 		// wait(LED_PC == LED_PC_WAIT_X2);
-		// CONSOLE_TransmitString("2");
+		// UART_TransmitString("2");
 
 		// wait(LED_PC == LED_PC_WAIT_Y2);
-		// CONSOLE_TransmitString("2");
+		// UART_TransmitString("2");
 
-		// CONSOLE_ReceiveString();
+		// UART_ReceiveString();
 		
 		/* Verifies overall functionality with lab3_backup.asm */
 		wait(LED_PC == LED_PC_WAIT_X);
-		CONSOLE_TransmitString("444");
+		UART_TransmitString("444");
 
 		wait(LED_PC == LED_PC_WAIT_Y);
-		CONSOLE_TransmitString("222");
+		UART_TransmitString("222");
 
 		wait(LED_PC == LED_PC_DISPLAY_LOOP);
 		DIP_SetSwitches(16'h0000); // division
@@ -211,10 +209,10 @@ module test_Wrapper #(
 		RESET = 1; repeat(2) @(posedge CLK); RESET = 0;
 		
 		wait(LED_PC == LED_PC_WAIT_X);
-		CONSOLE_TransmitString("222");
+		UART_TransmitString("222");
 
 		wait(LED_PC == LED_PC_WAIT_Y);
-		CONSOLE_TransmitString("444");
+		UART_TransmitString("444");
 
 		wait(LED_PC == LED_PC_DISPLAY_LOOP);
 		DIP_SetSwitches(16'h0000); // division

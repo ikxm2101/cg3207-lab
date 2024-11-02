@@ -63,29 +63,29 @@ module Wrapper
 		                             // [2:0] -> BTNL, BTNC, BTNR. Note that BTNU is used as PAUSE and BTND is used as RESET
 )
 (
-	input  [N_DIPs-1:0] DIP, 		 		// DIP switch inputs. Not debounced. Mapped to 0x00000C04. 
+	input  [N_DIPs-1:0] DIP, 		// DIP switch inputs. Not debounced. Mapped to DIP_ADDRESS. 
 	                                        // Only the least significant 16 bits read from this location are valid. 
-	input  [N_PBs-1:0] PB,  				// PB switch inputs. Not debounced.	Mapped to 0x00000C08. 
-	                                        // Only the least significant 4 bits read from this location are valid. Order (3 downto 0) -> BTNU, BTNL, BTNR, BTND.
-	output reg [N_LEDs_OUT-1:0] LED_OUT, 	// LED(15 downto 8) mapped to 0x00000C00. Only the least significant 8 bits written to this location are used.
-	output [6:0] LED_PC, 					// LED(6 downto 0) showing PC(8 downto 2).
-	output reg [31:0] SEVENSEGHEX, 			// 7 Seg LED Display. Mapped to 0x00000C18. The 32-bit value will appear as 8 Hex digits on the display.
-	output reg [7:0] CONSOLE_OUT,           // CONSOLE (UART) Output. Mapped to 0x00000C0C. The least significant 8 bits written to this location are sent to PC via UART.
-											// Check if CONSOLE_OUT_ready (0x00000C14) is set before writing to this location (especially if your CLK_DIV_BITS is small).
-											// Consecutive STRs to this location not permitted (there should be at least 1 instruction gap between STRs to this location).
-	input	CONSOLE_OUT_ready,				// An indication to the wrapper/processor that it is ok to write to the CONSOLE_OUT (UART hardware).
-	                                        // This bit should be set in the testbench to indicate that it is ok to write a new character to CONSOLE_OUT from your program.
-	                                        // It can be read from the address 0x00000C14.
+	input  [N_PBs-1:0] PB,  		// PB switch inputs. Not debounced.	Mapped to PB_ADDRESS. 
+	                                        // Only the least significant 3 bits read from this location are valid. Order (2 downto 0) ->  BTNL, BTNC, BTNR
+	output reg [N_LEDs_OUT-1:0] LED_OUT, 	// LED(15 downto 8) mapped to LED_ADDRESS. Only the least significant 8 bits written to this location are used.
+	output [6:0] LED_PC, 			// LED(6 downto 0) showing PC(8 downto 2).
+	output reg [31:0] SEVENSEGHEX, 		// 7 Seg LED Display. Mapped to SEVENSEG_ADDRESS. The 32-bit value will appear as 8 Hex digits on the display.
+	output reg [7:0] CONSOLE_OUT,           // CONSOLE (UART) Output. Mapped to CONSOLE_ADDRESS. The least significant 8 bits written to this location are sent to PC via UART.
+						// Check if CONSOLE_OUT_ready (CONSOLE_OUT_ready_ADDRESS) is set before writing to this location (especially if your CLK_DIV_BITS is small).
+						// Consecutive STRs to this location not permitted (there should be at least 1 instruction gap between STRs to this location).
+	input	CONSOLE_OUT_ready,		// An indication to the wrapper/processor that it is ok to write to the CONSOLE_OUT (UART hardware).
+	                                        	//  This bit should be set in the testbench to indicate that it is ok to write a new character to CONSOLE_OUT from your program.
+	                                        	//  It can be read from the address CONSOLE_OUT_ready_ADDRESS.
 	output reg CONSOLE_OUT_valid,           // An indication to the UART hardware that the processor has written a new data byte to be transmitted.
-	input  [7:0] CONSOLE_IN,                // CONSOLE (UART) Input. Mapped to 0x00000C0C. The least significant 8 bits read from this location is the character received from PC via UART.
-	                                        // Check if CONSOLE_IN_valid flag (0x00000C10) is set before reading from this location.
-											// Consecutive LDRs from this location not permitted (needs at least 1 instruction spacing between LDRs).
-											// Also, note that there is no Tx FIFO implemented. DO NOT send characters from PC at a rate faster than 
-											// your processor (program) can read them. This means sending only 1 char every few seconds if your CLK_DIV_BITS is 26.
-											// This is not a problem if your processor runs at a high speed.
+	input  [7:0] CONSOLE_IN,                // CONSOLE (UART) Input. Mapped to CONSOLE_ADDRESS. The least significant 8 bits read from this location is the character received from PC via UART.
+	                                        	// Check if CONSOLE_IN_valid flag (CONSOLE_IN_valid_ADDRESS)is set before reading from this location.
+							// Consecutive LDRs from this location not permitted (needs at least 1 instruction spacing between LDRs).
+							// Also, note that there is no Tx FIFO implemented. DO NOT send characters from PC at a rate faster than 
+							//  your processor (program) can read them. This means sending only 1 char every few seconds if your CLK_DIV_BITS is 26.
+							// 	This is not a problem if your processor runs at a high speed.
 	input  	CONSOLE_IN_valid,               // An indication to the wrapper/processor that there is a new data byte waiting to be read from the UART hardware.
 	                                        // This bit should be set in the testbench to indicate a new character (Else, the processor will only read in 0x00).
-											// It can be read from the address 0x00000C10.
+							//  It can be read from the address CONSOLE_IN_valid_ADDRESS.
 	output reg CONSOLE_IN_ack,              // An indication to the UART hardware that the processor has read the newly received data byte.
 	                                        // The testbench should clear CONSOLE_IN_valid when this is set.
 	input  RESET,				// Active high. Implemented in TOP as not(CPU_RESET) or Internal_reset (CPU_RESET is red push button and is active low).
@@ -331,15 +331,15 @@ assign LED_PC = PC[15-N_LEDs_OUT+1 : 2]; // debug showing PC
 // RV port map
 //----------------------------------------------------------------
 RV RV1(
-	.CLK(CLK),
-	.RESET(RESET),
-	.Instr(Instr),
-	.ReadData_in(ReadData_in),
-	.MemRead(MemRead),
-	.MemWrite_out(MemWrite_out),
-	.PC(PC),
-	.ALUResult(ALUResult),
-	.WriteData_out(WriteData_out)
+	CLK,
+	RESET,
+	Instr,
+	ReadData_in,
+	MemRead,
+	MemWrite_out,
+	PC,
+	ALUResult,
+	WriteData_out
 );
 
 endmodule

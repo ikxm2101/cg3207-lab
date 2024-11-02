@@ -61,7 +61,7 @@ module test_MCycle(
         .Operand2(Operand2), 
         .MCycle_Result1(Result1), 
         .MCycle_Result2(Result2), 
-        .Busy(Busy)
+        .MCycle_Busy(Busy)
     );
     
     // STIMULI
@@ -82,6 +82,7 @@ module test_MCycle(
         wait(~Busy);
         assert(Result1 == 4'b0001 && Result2 == 4'b0000) 
                 else $error("SM: -1 * -1; R1: %b; R2: %b", Result1, Result2);
+         
 
         #10;
         Start = 1'b0;
@@ -111,10 +112,25 @@ module test_MCycle(
         assert(Result1 == 4'b0000 && Result2 == 4'b0000)
                 else $error("SM: -1 * 0; R1: %b; R2: %b", Result1, Result2);
 
+
+        #10;
+        Start = 1'b0;
+        #10;
+
+        // -8 * 7 = -56
+        Operand1 = 4'b1000; // -8
+        Operand2 = 4'b0111; // 7
+        Start = 1'b1;
+
+        wait(Busy);
+        wait(~Busy);
+        assert(Result1 == 4'b1000 && Result2 == 4'b1100)
+                else $error("SM: -8 * 7; R1: %b; R2: %b", Result1, Result2);
+
+
         #10 ;
         Start = 1'b0 ;
         #10 ;
-       
 
         // 7 * -8 = -56
         Operand1 = 4'b0111 ; // 7
@@ -487,6 +503,8 @@ module test_MCycle(
 
        #10;
        Start = 1'b0;
+       
+       $finish;
     end
      
     // GENERATE CLOCK       

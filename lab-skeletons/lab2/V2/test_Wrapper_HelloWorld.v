@@ -38,38 +38,53 @@ module test_Wrapper #(
 	// Instantiate UUT
 	Wrapper dut(DIP, PB, LED_OUT, LED_PC, SEVENSEGHEX, CONSOLE_OUT, CONSOLE_OUT_ready, CONSOLE_OUT_valid, CONSOLE_IN, CONSOLE_IN_valid, CONSOLE_IN_ack, RESET, CLK) ;
 	
+	// Note: This testbench is for the Hello World program. Other assembly programs require appropriate modifications.
+	// Run for about 6 us. Set CONSOLE_OUT radix to ASCII to see the printed messages.
 	// STIMULI
     initial
     begin
-		RESET = 1; #10; RESET = 0; //hold reset state for 10 ns.
-		CONSOLE_OUT_ready = 1'h1; // ok to keep it high continously in the testbench. In reality, it will be high only if UART is ready to send a data to PC
-
-		/* Sequence of signals for UART input
-		 * 1. Write an input to CONSOLE_IN
-		 * 2. Set CONSOLE_IN_valid to 1
-		 * 3. Wait for CONSOLE_IN_ack to be 1
-		 * 4. Set CONSOLE_IN_valid to 0
-		*/
-        CONSOLE_IN = 8'h50; // 'P'. Will be read and ignored by the processor
+	RESET = 1; #10; RESET = 0; //hold reset state for 10 ns.
+	CONSOLE_OUT_ready = 1'h1; // ok to keep it high continously in the testbench. In reality, it will be high only if UART is ready to send a data to PC
+        CONSOLE_IN = 8'h50;// 'P'. Will be read and ignored by the processor
         CONSOLE_IN_valid = 1'h1;
         wait(CONSOLE_IN_ack);
         wait(~CONSOLE_IN_ack);
         CONSOLE_IN_valid = 1'h0;
         #105;
-
         CONSOLE_IN = 8'h41;// 'A'
         CONSOLE_IN_valid = 1'h1;
         wait(CONSOLE_IN_ack);
         wait(~CONSOLE_IN_ack);
-		CONSOLE_IN_valid = 1'h0;
+	CONSOLE_IN_valid = 1'h0;
         #105;
-
-        CONSOLE_IN = 8'h0D; // '\r'
+        CONSOLE_IN = 8'h0D;// '\r'
         CONSOLE_IN_valid = 1'h1;
         wait(CONSOLE_IN_ack); // should print "Welcome to CG3207" following this.
         wait(~CONSOLE_IN_ack);
         CONSOLE_IN_valid = 1'h0;
-		
+        #2500
+        // Run the simulation for about 3 us to see the full printed message. 
+        
+        // We are triggering a print one more time to see if it goes back correctly.
+        // Run the simulation for another 3 us to see the full printed message a second time.
+        
+        CONSOLE_IN = 8'h50;// 'P'. Will be read and ignored by the processor
+        CONSOLE_IN_valid = 1'h1;
+        wait(CONSOLE_IN_ack);
+        wait(~CONSOLE_IN_ack);
+        CONSOLE_IN_valid = 1'h0;
+        #105;
+        CONSOLE_IN = 8'h41;// 'A'
+        CONSOLE_IN_valid = 1'h1;
+        wait(CONSOLE_IN_ack);
+        wait(~CONSOLE_IN_ack);
+	CONSOLE_IN_valid = 1'h0;
+        #105;
+        CONSOLE_IN = 8'h0D;// '\r'
+        CONSOLE_IN_valid = 1'h1;
+        wait(CONSOLE_IN_ack); // should print "Welcome to CG3207" following this.
+        wait(~CONSOLE_IN_ack);
+        CONSOLE_IN_valid = 1'h0;
 		//insert rest of the stimuli here
     end
 	
