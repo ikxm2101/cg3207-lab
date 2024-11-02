@@ -235,6 +235,7 @@ module RV(
     reg [31:0] ALUResult_M = 32'h0;
     reg [31:0] WriteData_M = 32'h0;
     reg [4:0] rd_M = 5'h0;
+    reg [4:0] rs2_M = 5'h0;
 
     /* Signals in M Stage */
     // v2: <Added to support lb/lbu/lh/lhu/sb/sh>
@@ -270,8 +271,10 @@ module RV(
      *****************************************/ 
     wire [1:0] ForwardAE;
     wire [1:0] ForwardBE;
+    wire ForwardM;
     wire [31:0] RD1_E_Choose;
     wire [31:0] RD2_E_Choose;
+    wire [31:0] WriteData_M_Choose;
 
 
     /*************************************************************************
@@ -518,6 +521,7 @@ module RV(
             ALUResult_M <= 32'h0;
             WriteData_M <= 32'h0;
             rd_M <= 5'h0;
+            rs2_M <= 5'h0;
         end else if (MCycle_Busy) begin
             RegWrite_M <= RegWrite_M;
             MemtoReg_M <= MemtoReg_M ;
@@ -525,6 +529,7 @@ module RV(
             ALUResult_M <= ALUResult_M;
             WriteData_M <= WriteData_M;
             rd_M <= rd_M;
+            rs2_M <= rs2_M;
         end else begin
             RegWrite_M <= RegWrite_E;
             MemtoReg_M <= MemtoReg_E;
@@ -532,6 +537,7 @@ module RV(
             ALUResult_M <= ALUResult_E;
             WriteData_M <= WriteData_E;
             rd_M <= rd_E;
+            rs2_M <= rs2_E;
         end
     end
 
@@ -545,7 +551,7 @@ module RV(
     
     assign ALUResult_out = ALUResult_M;
 
-    assign WriteData_out = WriteData_M;
+    assign WriteData_out = WriteData_M_Choose;
 
     assign ReadData_M = ReadData_in;     // Change datapath as appropriate if supporting lb/lbu/lh/lhu
 
@@ -603,6 +609,8 @@ module RV(
                             ((ForwardBE[0] == 1'b0) ? RD2_E : Result_W)
                             : ALUResult_M ;
 
+    assign WriteData_M_Choose = (ForwardM == 1'b0) ? WriteData_M : Result_W;
+
     Hazard IHazard_1(
         .rs1_E(rs1_E),
         .rs2_E(rs2_E),
@@ -610,8 +618,12 @@ module RV(
         .rd_W(rd_W),
         .RegWrite_M(RegWrite_M),
         .RegWrite_W(RegWrite_W),
+        .rs2_M(rs2_M),
+        .MemWrite_M(MemWrite_M),
+        .MemtoReg_W(MemtoReg_W),
         .ForwardAE(ForwardAE),
-        .ForwardBE(ForwardBE)
+        .ForwardBE(ForwardBE),
+        .ForwardM(ForwardM)
     );
 
     /*************************************************************************

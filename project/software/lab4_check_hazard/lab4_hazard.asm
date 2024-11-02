@@ -23,20 +23,25 @@ init:
     li s3, 10
     li s4, 23
     li s5, 34
+    la t1, VALUE_DUMMY
     nop
     nop
 
-test_hazard:
+test_hazard_data_forward:
     add s8, s4, s5  # 57
     sub s2, s8, s3  # 47
     or s9, s4, s8   # 63
     and s7, s8, s3  # 8
-    
+
 display:
     sw s8, (s1)
     sw s2, (s1)
     sw s9, (s1)
     sw s7, (s1)
+
+test_hazard_m2m:
+    lw s3, (t1)
+    sw s3, (s1)
 
 final:
     jal init
@@ -58,6 +63,7 @@ final:
 # Total number of constants should not exceed 128
 # If a variable is accessed multiple times, it is better to store the address in a register and use it rather than load it repeatedly.
 DROM:
+VALUE_DUMMY: .word 0x0045
 string1:
 .asciz "\r\nWelcome to CG3207..\r\n"
 
