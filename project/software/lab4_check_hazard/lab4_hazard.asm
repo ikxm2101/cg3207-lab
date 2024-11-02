@@ -19,13 +19,11 @@
 
     la s1, SEVENSEG
 init:
-    sw zero, (s1)
+    sw zero, (s1)   # 0
     li s3, 10
     li s4, 23
     li s5, 34
     la t1, VALUE_DUMMY
-    nop
-    nop
 
 test_hazard_data_forward:
     add s8, s4, s5  # 57
@@ -33,22 +31,40 @@ test_hazard_data_forward:
     or s9, s4, s8   # 63
     and s7, s8, s3  # 8
 
-display:
+display_a:
     sw s8, (s1)
     sw s2, (s1)
     sw s9, (s1)
     sw s7, (s1)
 
 test_hazard_m2m:
-    lw s3, (t1)
+    lw s3, (t1)     # 69
     sw s3, (s1)
+
+test_hazard_lw:
+    lw s7, (t1)     # 69
+    and s8, s7, s4  # 5
+    or t2, s5, s7   # 103
+    sub s3, s7, s2  # 22
+
+display_b:
+    sw s8, (s1)     
+    sw t2, (s1)
+    sw s3, (s1)
+
+test_hazard_control:
+    bne s3, s8, control_ok
+    sub s8, t2, s3  # 81
+    sw s8, (s1)     
+    or s9, t2, s3
+
+control_ok:
+    addi s8, s8, 10 # 15
+    sw s8, (s1) 
+
 
 final:
     jal init
-    nop
-    nop
-    nop
-    nop
 
 
 

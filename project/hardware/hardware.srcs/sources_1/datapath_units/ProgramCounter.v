@@ -52,7 +52,9 @@ module ProgramCounter(
         if(RESET)
             PC <= 32'h00000000; // Should be the same as the initial value above.
         else if(~PC_WE) 
-            PC <= PC_IN ;        
+            PC <= PC_IN ;  
+        else    
+            PC <= PC;      
     end
     
 endmodule

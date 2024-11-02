@@ -272,6 +272,9 @@ module RV(
     wire [1:0] ForwardAE;
     wire [1:0] ForwardBE;
     wire ForwardM;
+    wire StallF;
+    wire StallD;
+    wire FlushE;
     wire [31:0] RD1_E_Choose;
     wire [31:0] RD2_E_Choose;
     wire [31:0] WriteData_M_Choose;
@@ -317,17 +320,17 @@ module RV(
                      ((PCSrc_E[0] == 1'b0) ? PC_F : PC_E) // Will choose PC_E if brancgh or jump
                      : RD1_E;
     // PC_WE for Multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
-    assign PC_WE = MCycle_Busy ? 1'b1 : 1'b0;  // PC is active-low
+    assign PC_WE = (MCycle_Busy || StallF) ? 1'b1 : 1'b0;  // PC is active-low
     assign PC = PC_F;                   // For output to wrapper
 
     /*****************************************
      * Decode Pipeline Register
      *****************************************/
     always @(posedge CLK) begin
-        if (RESET) begin
-            Instr_D <= 32'h0;
+        if (RESET || PCSrc_E[0]) begin
+            Instr_D <= 32'h000000013;
             PC_D <= 32'h0;
-        end else if (MCycle_Busy) begin
+        end else if (MCycle_Busy || StallD) begin
             Instr_D <= Instr_D;
             PC_D <= PC_D;
         end
@@ -390,7 +393,7 @@ module RV(
      * Execute Pipeline Register
      *****************************************/
     always @(posedge CLK) begin
-        if (RESET) begin
+        if (RESET || FlushE || PCSrc_E[0]) begin
             PCS_E <= 2'b00;
             Funct3_E <= 3'b000;
             RegWrite_E <= 1'b0;
@@ -621,9 +624,16 @@ module RV(
         .rs2_M(rs2_M),
         .MemWrite_M(MemWrite_M),
         .MemtoReg_W(MemtoReg_W),
+        .rs1_D(rs1_D),
+        .rs2_D(rs2_D),
+        .rd_E(rd_E),
+        .MemtoReg_E(MemtoReg_E),
         .ForwardAE(ForwardAE),
         .ForwardBE(ForwardBE),
-        .ForwardM(ForwardM)
+        .ForwardM(ForwardM),
+        .StallF(StallF),
+        .StallD(StallD),
+        .FlushE(FlushE)
     );
 
     /*************************************************************************
