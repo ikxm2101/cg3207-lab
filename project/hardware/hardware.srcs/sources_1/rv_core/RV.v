@@ -170,6 +170,8 @@ module RV(
     // wire [31:0] ExtImm_D;
     wire [4:0] rd_D;
     // reg [31:0] PC_D = 32'h0;
+    // wire [4:0] rs1_D;
+    // wire [4:0] rs2_D;
 
     // Outputs
     reg [2:0] Funct3_E = 3'h0;
@@ -188,6 +190,8 @@ module RV(
     reg [31:0] ExtImm_E = 32'h0;
     reg [4:0] rd_E = 5'h0;
     reg [31:0] PC_E = 32'h0;
+    reg [4:0] rs1_E = 5'h0;
+    reg [4:0] rs2_E = 5'h0;
 
     /* PC_Logic signals */
     // wire [1:0] PCS_E
@@ -260,6 +264,14 @@ module RV(
 
     // Other signals in Writeback stage
     wire [31:0] Result_W;
+
+    /*****************************************
+     * Hazard Unit
+     *****************************************/ 
+    wire [1:0] ForwardAE;
+    wire [1:0] ForwardBE;
+    wire [31:0] RD1_E_Choose;
+    wire [31:0] RD2_E_Choose;
 
 
     /*************************************************************************
@@ -392,6 +404,8 @@ module RV(
             ExtImm_E <= 32'h0;
             rd_E <= 5'h0;
             PC_E <= 32'h0;
+            rs1_E <= 5'h0;
+            rs2_E <= 5'h0;
         end else if (MCycle_Busy) begin
             PCS_E <= PCS_E;
             Funct3_E <= Funct3_E;
@@ -409,6 +423,8 @@ module RV(
             ExtImm_E <= ExtImm_E;
             rd_E <= rd_E;
             PC_E <= PC_E;
+            rs1_E <= rs1_E;
+            rs2_E <= rs2_E;
         end else begin
             PCS_E <= PCS_D;
             Funct3_E <= Funct3_D;
@@ -426,6 +442,8 @@ module RV(
             ExtImm_E <= ExtImm_D;
             rd_E <= rd_D;
             PC_E <= PC_D;
+            rs1_E <= rs1_D;
+            rs2_E <= rs2_D;
         end
     end
 
@@ -471,11 +489,11 @@ module RV(
      * Src_A == MCycle_Operand1
      * Src_B == MCycle_Operand2
     */
-    assign Src_A =  (ALUSrcA_E[0] == 1'b0) ? RD1_E : 
+    assign Src_A =  (ALUSrcA_E[0] == 1'b0) ? RD1_E_Choose : 
                     (ALUSrcA_E[1] == 1'b0) ? 1'b0 : PC_E;
     assign MCycle_Operand1 = Src_A;
 
-    assign Src_B =  (ALUSrcB_E[0] == 1'b0) ? RD2_E :
+    assign Src_B =  (ALUSrcB_E[0] == 1'b0) ? RD2_E_Choose :
                     (ALUSrcB_E[1] == 1'b0) ? 4 : ExtImm_E;
     assign MCycle_Operand2 = Src_B;
     /* 
@@ -487,7 +505,7 @@ module RV(
                             (MCycle_ResultSelect_E ? MCycle_Result2 : MCycle_Result1) // select MCycle_Result based on the instruction
                             : ALUResult;
 
-    assign WriteData_E = RD2_E; 
+    assign WriteData_E = RD2_E_Choose; 
                         
     /*****************************************
      * Memory Pipeline Register
@@ -563,7 +581,8 @@ module RV(
 
     /*****************************************
      * Writeback Stage Datapath
-     *****************************************/        /* Datapath result */
+     *****************************************/        
+    /* Datapath result */
     assign Result_W = (MemtoReg_W == 1'b0) ? ALUResult_W : ReadData_W; // check if its a load instruction
 
     /* Register write enable */
@@ -572,7 +591,29 @@ module RV(
     /* Register write data */
 	assign RegFile_WD = Result_W;
 
-    
+
+    /*****************************************
+     * Hazard Unit
+     *****************************************/ 
+    assign RD1_E_Choose = (ForwardAE[1] == 1'b0) ? 
+                            ((ForwardAE[0] == 1'b0) ? RD1_E : Result_W)
+                            : ALUResult_M ;
+
+    assign RD2_E_Choose = (ForwardBE[1] == 1'b0) ? 
+                            ((ForwardBE[0] == 1'b0) ? RD2_E : Result_W)
+                            : ALUResult_M ;
+
+    Hazard IHazard_1(
+        .rs1_E(rs1_E),
+        .rs2_E(rs2_E),
+        .rd_M(rd_M),
+        .rd_W(rd_W),
+        .RegWrite_M(RegWrite_M),
+        .RegWrite_W(RegWrite_W),
+        .ForwardAE(ForwardAE),
+        .ForwardBE(ForwardBE)
+    );
+
     /*************************************************************************
                         END OF STAGE DATAPATH CONNECTION
     *************************************************************************/
