@@ -116,8 +116,8 @@ module RV(
     wire [31:0] Instr_F;
 
     // Outputs
-    reg [31:0] Instr_D;
-    reg [31:0] PC_D;
+    reg [31:0] Instr_D = 0;
+    reg [31:0] PC_D = 0;
 
     /* Decoder signals */
     wire [2:0] Funct3_D ;
@@ -172,22 +172,22 @@ module RV(
     // reg [31:0] PC_D;
 
     // Outputs
-    reg [2:0] Funct3_E;
-    reg [1:0] PCS_E;
-    reg RegWrite_E;
-    reg MemtoReg_E;
-    reg MemWrite_E;
-    reg [3:0] ALUControl_E;
-    reg [1:0] ALUSrcA_E;
-    reg [1:0] ALUSrcB_E;
-    reg MCycleStart_E;
-    reg MCycle_ResultSelect_E;
-    reg [1:0] MCycleOp_E;
-    reg [31:0] RD1_E;
-    reg [31:0] RD2_E;
-    reg [31:0] ExtImm_E;
-    reg [4:0] rd_E;
-    reg [31:0] PC_E;
+    reg [2:0] Funct3_E = 0;
+    reg [1:0] PCS_E = 0;
+    reg RegWrite_E = 0;
+    reg MemtoReg_E = 0;
+    reg MemWrite_E = 0;
+    reg [3:0] ALUControl_E = 0;
+    reg [1:0] ALUSrcA_E = 0;
+    reg [1:0] ALUSrcB_E = 0;
+    reg MCycleStart_E = 0;
+    reg MCycle_ResultSelect_E = 0;
+    reg [1:0] MCycleOp_E = 0;
+    reg [31:0] RD1_E = 0;
+    reg [31:0] RD2_E = 0;
+    reg [31:0] ExtImm_E = 0;
+    reg [4:0] rd_E = 0;
+    reg [31:0] PC_E = 0;
 
     /* PC_Logic signals */
     // wire [1:0] PCS_E
@@ -198,7 +198,7 @@ module RV(
     /* ALU signals */
     wire [31:0] Src_A ;
     wire [31:0] Src_B ;
-    // reg [3:0] ALUControl_E ;
+    // reg [3:0] ALUControl_E = 0 ;
     wire [31:0] ALUResult ;
     wire [2:0] ALUFlags ;
     
@@ -206,7 +206,7 @@ module RV(
     // wire CLK ;
     // wire RESET ;
     // wire MCycleStart_E ;
-    // reg [1:0] MCycleOp_E ;
+    // reg [1:0] MCycleOp_E = 0 ;
     wire [31:0] MCycle_Operand1 ;
     wire [31:0] MCycle_Operand2 ; 
     wire [31:0] MCycle_Result1 ;
@@ -225,19 +225,19 @@ module RV(
     // wire [4:0] rd_E;
 
     // Outputs
-    reg RegWrite_M;
-    reg MemtoReg_M;
-    reg MemWrite_M;
-    reg [31:0] ALUResult_M;
-    reg [31:0] WriteData_M;
-    reg [4:0] rd_M;
+    reg RegWrite_M = 0;
+    reg MemtoReg_M = 0;
+    reg MemWrite_M = 0;
+    reg [31:0] ALUResult_M = 0;
+    reg [31:0] WriteData_M = 0;
+    reg [4:0] rd_M = 0;
 
     /* Signals in M Stage */
     // v2: <Added to support lb/lbu/lh/lhu/sb/sh>
     wire [2:0] SizeSel;
-    // reg MemWrite_M;
-    // reg [31:0] ALUResult_M;
-    // reg [31:0] WriteData_M;
+    // reg MemWrite_M = 0;
+    // reg [31:0] ALUResult_M = 0;
+    // reg [31:0] WriteData_M = 0;
     wire [31:0] ReadData_M;
 
 
@@ -245,18 +245,18 @@ module RV(
      * W Stage Register Signals 
      *****************************************/
     // Inputs
-    // reg RegWrite_M;
-    // reg MemtoReg_M;
+    // reg RegWrite_M = 0;
+    // reg MemtoReg_M = 0;
     // wire [31:0] ReadData_M;
-    // reg [31:0] ALUResult_M;
-    // reg [4:0] rd_M;
+    // reg [31:0] ALUResult_M = 0;
+    // reg [4:0] rd_M = 0;
     
     // Outputs
-    reg RegWrite_W;
-    reg MemtoReg_W;
-    reg [31:0] ReadData_W;
-    reg [31:0] ALUResult_W;
-    // reg [4:0] rd_W;
+    reg RegWrite_W = 0;
+    reg MemtoReg_W = 0;
+    reg [31:0] ReadData_W = 0;
+    reg [31:0] ALUResult_W = 0;
+    // reg [4:0] rd_W = 0;
 
     // Other signals in Writeback stage
     wire [31:0] Result_W;
