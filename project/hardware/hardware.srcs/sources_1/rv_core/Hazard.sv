@@ -3,7 +3,7 @@ module Hazard(
     input [4:0] rs1_E,              // Data Forward
     input [4:0] rs2_E,              // Data Forward
     input [4:0] rd_M,               // Data Forward
-    input [4:0] rd_W,               // Data Forward
+    input [4:0] rd_W,               // Data Forward and WD Forward
     input RegWrite_M,               // Data Forward
     input RegWrite_W,               // Data Forward
     input [4:0] rs2_M,              // M2M Copy
@@ -18,7 +18,9 @@ module Hazard(
     output logic ForwardM,          // M2M Copy
     output StallF,                  // Load and Use
     output StallD,                  // Load and Use
-    output FlushE                   // Load and Use
+    output FlushE,                  // Load and Use
+    output Forward1D,               // WD Forward
+    output Forward2D                // WD Forward
     );
 
     // Data Forward
@@ -52,5 +54,9 @@ module Hazard(
     assign StallF = lwStall;
     assign StallD = lwStall;
     assign FlushE = lwStall;
+
+    // WD Forward
+    assign Forward1D = (rs1_D == rd_W) && RegWrite_W && (rd_W != 5'h0);
+    assign Forward2D = (rs2_D == rd_W) && RegWrite_W && (rd_W != 5'h0);
 endmodule
 

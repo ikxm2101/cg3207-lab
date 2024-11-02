@@ -275,9 +275,13 @@ module RV(
     wire StallF;
     wire StallD;
     wire FlushE;
+    wire Forward1D;
+    wire Forward2D;
     wire [31:0] RD1_E_Choose;
     wire [31:0] RD2_E_Choose;
     wire [31:0] WriteData_M_Choose;
+    wire [31:0] RD1_D_Choose;
+    wire [31:0] RD2_D_Choose;
 
 
     /*************************************************************************
@@ -443,8 +447,8 @@ module RV(
             MCycleStart_E <= MCycleStart_D;
             MCycle_ResultSelect_E <= MCycle_ResultSelect_D;
             MCycleOp_E <= MCycleOp_D;
-            RD1_E <= RD1_D;
-            RD2_E <= RD2_D;
+            RD1_E <= RD1_D_Choose;
+            RD2_E <= RD2_D_Choose;
             ExtImm_E <= ExtImm_D;
             rd_E <= rd_D;
             PC_E <= PC_D;
@@ -614,6 +618,9 @@ module RV(
 
     assign WriteData_M_Choose = (ForwardM == 1'b0) ? WriteData_M : Result_W;
 
+    assign RD1_D_Choose = (Forward1D == 1'b0) ? RD1_D : Result_W;
+    assign RD2_D_Choose = (Forward2D == 1'b0) ? RD2_D : Result_W;
+
     Hazard IHazard_1(
         .rs1_E(rs1_E),
         .rs2_E(rs2_E),
@@ -633,7 +640,9 @@ module RV(
         .ForwardM(ForwardM),
         .StallF(StallF),
         .StallD(StallD),
-        .FlushE(FlushE)
+        .FlushE(FlushE),
+        .Forward1D(Forward1D),
+        .Forward2D(Forward2D)
     );
 
     /*************************************************************************
