@@ -47,6 +47,14 @@ test_divu:
 
 check_divu:
     sw t2, (s1)
+    
+test_slt:
+    slt t2, t1, t0
+    nop
+    nop
+    
+check_slt:
+    sw t2, (s1)
 
 end:
     jal init

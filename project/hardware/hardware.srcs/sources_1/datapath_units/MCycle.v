@@ -186,16 +186,7 @@ module MCycle #(
             end else begin
                 temp_sum = {temp_sum[width*2-2 : 0], 1'b0};
             end
-
-            // This is taken from lecture notes implementation
-            // shifted_op1 = shifted_op1 - shifted_op2;
-            // if (shifted_op1[width*2-1] == 1) begin
-            //     shifted_op1 = shifted_op1 + shifted_op2;    // Restore original dividend
-            //     temp_sum = {temp_sum[width*2-2 : 0], 1'b0};   // Shift left quotient
-            // end else begin
-            //     temp_sum = {temp_sum[width*2-2 : 0], 1'b1};   // Shift left quotient
-            // end
-
+            
             shifted_op2 = {1'b0, shifted_op2[width*2-1 : 1]}; // Shift right divisor
 
             // Check for "width" cycle of operations
