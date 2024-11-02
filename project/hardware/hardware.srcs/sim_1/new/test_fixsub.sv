@@ -42,7 +42,7 @@ module test_fixsub #(
 	reg  [7:0] UART_RX = 0;
 	reg  UART_RX_valid = 0;
 	wire UART_RX_ack;
-	reg  RESET = 0;					
+	reg  RESET = 1;					
 	reg  CLK = 0;				
 	
 	// Module instantiation of wrapper
@@ -66,6 +66,7 @@ module test_fixsub #(
     always #5 CLK = ~CLK ; // invert clk every 5 time units (ns) -> period of 10 ns -> 100 MHz clock
     
     initial begin
+        #10; RESET = 0;
         $monitor("Time= %t, SEVENSEGHEX: %d", $time, SEVENSEGHEX);
  
         repeat(500) @(posedge CLK); // wait for 100 clock cycles before finishing the simulation
