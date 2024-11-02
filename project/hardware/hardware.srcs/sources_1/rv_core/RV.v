@@ -168,7 +168,7 @@ module RV(
     // wire [31:0] RD1_D;
     // wire [31:0] RD2_D;
     // wire [31:0] ExtImm_D;
-    // wire [4:0] rd_D;
+    wire [4:0] rd_D;
     // reg [31:0] PC_D;
 
     // Outputs
