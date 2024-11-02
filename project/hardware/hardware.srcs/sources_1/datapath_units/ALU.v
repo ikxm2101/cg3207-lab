@@ -58,14 +58,14 @@ module ALU (
     /* ALU Control signals */
     localparam ADD = 4'b0000;
     localparam SUB = 4'b0001;
-    localparam XOR = 4'b1000; // TODO: not impl
+    localparam XOR = 4'b1000;
     localparam OR  = 4'b1100;
     localparam AND = 4'b1110;
     localparam SLL = 4'b0010;
     localparam SRL = 4'b1010;
     localparam SRA = 4'b1011;
-    localparam SLT = 4'b0100; // TODO: not impl
-    localparam SLTU = 4'b0110; // TODO: not impl
+    localparam SLT = 4'b0100;
+    localparam SLTU = 4'b0110;
 
     always @(Src_A, Src_B, ALUControl, S_wider, ShOut) begin
         // default values: help avoid latches
@@ -83,6 +83,19 @@ module ALU (
             end
             AND: ALUResult = Src_A & Src_B;
             OR: ALUResult = Src_A | Src_B; 
+            XOR: ALUResult = Src_A ^ Src_B;
+            SLT: begin
+                if (Src_A[31] != Src_B[31]) begin
+                    ALUResult = (Src_A[31] == 1) ? 32'd1 : 32'd0;
+                end else begin
+                    if (Src_A[31] == 1) begin
+                        ALUResult = (Src_A > Src_B) ? 32'd1 : 32'd0;
+                    end else begin
+                        ALUResult = (Src_A < Src_B) ? 32'd1 : 32'd0;
+                    end
+                end
+            end
+            SLTU: ALUResult = (Src_A < Src_B) ? 32'd1 : 32'd0;
             SLL: ALUResult = ShOut;
             SRL: ALUResult = ShOut;
             SRA: ALUResult = ShOut;	
@@ -91,12 +104,13 @@ module ALU (
     end
       
     assign Z = (ALUResult == 0) ? 1 : 0 ;
+    assign N = ALUResult[31];
+
     
     assign ALUFlags = {Z, 1'b0, 1'b0} ; // {eq, lt, ltu} - all except eq are placeholders. 
     					                // TODO : Will need to be modified in lab 3 to support blt, bltu, bge, bgeu.
     
     
-    // TODO: make shifter connections here
     /* Sh signals used by Shifter module can be derived directly from the appropriate ALUControl bits
      * Shift operation | ALUControl[3:0] | Sh[1:0]
      * SLL | 0010 | 00 
