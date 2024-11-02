@@ -69,7 +69,7 @@ module test_fixsub #(
         #10; RESET = 0;
         $monitor("Time= %t, SEVENSEGHEX: %d", $time, SEVENSEGHEX);
  
-        repeat(10000) @(posedge CLK); // wait for 100 clock cycles before finishing the simulation
+        repeat(100000) @(posedge CLK); // wait for 100 clock cycles before finishing the simulation
     $finish;
     end
 endmodule

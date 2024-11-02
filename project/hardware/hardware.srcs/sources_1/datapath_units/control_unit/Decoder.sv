@@ -164,10 +164,11 @@ module Decoder(
     end
     
     always_comb begin : MCycleStartBlock
-        case (Funct7)
-            FUNCT7_M: MCycleStart = 1'b1;
-            default: MCycleStart = 1'b0;
-        endcase
+        if ((Funct7 == FUNCT7_M) && (Opcode == OPCODE_DP_REG)) begin
+            MCycleStart = 1'b1;
+        end else begin
+            MCycleStart = 1'b0;
+        end
     end
 
     always_comb begin : MCycle_ResultSelectBlock
