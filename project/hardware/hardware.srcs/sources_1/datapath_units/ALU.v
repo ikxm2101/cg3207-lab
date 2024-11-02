@@ -105,11 +105,11 @@ module ALU (
       
     assign Z = (ALUResult == 0) ? 1 : 0 ;
     assign N = ALUResult[31];
+    assign C = S_wider[32];
+    assign V = (ALUControl == SUB) ? ((Src_A[31] ^ Src_B[31]) & (Src_A[31] ^ ALUResult[31])) : 1'd0;
 
     
-    assign ALUFlags = {Z, 1'b0, 1'b0} ; // {eq, lt, ltu} - all except eq are placeholders. 
-    					                // TODO : Will need to be modified in lab 3 to support blt, bltu, bge, bgeu.
-    
+    assign ALUFlags = {Z, (N ^ V), ~C} ; // {eq, lt, ltu} - all except eq are placeholders.     
     
     /* Sh signals used by Shifter module can be derived directly from the appropriate ALUControl bits
      * Shift operation | ALUControl[3:0] | Sh[1:0]
