@@ -74,8 +74,8 @@ module PC_Logic(                    // This is a combinational module, unlike AR
                     FUNCT3_BNE: PCSrc = {1'b0, ~ALUFlags[2]};
                     FUNCT3_BLT: PCSrc = {1'b0, ALUFlags[1]};
                     FUNCT3_BGE: PCSrc = {1'b0, ~ALUFlags[1]};
-                    FUNCT3_BLTU: PCSrc ={1'b0,  ALUFlags[0]};
-                    FUNCT3_BGEU: PCSrc ={1'b0,  ~ALUFlags[0]};
+                    FUNCT3_BLTU: PCSrc = {1'b0, ALUFlags[0]};
+                    FUNCT3_BGEU: PCSrc = {1'b0, ~ALUFlags[0]};
                     default: PCSrc = 2'bxx;
                 endcase
             end

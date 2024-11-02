@@ -90,26 +90,28 @@ module RV(
 
     // The signals that are commented out (except CLK) will need to be uncommented and attached a stage suffix for pipelining, except if the connection is within the same stage.
     
-    /* F stage register (PC) Signals */
+    /*************************************************************************
+                            START OF REGISTER DECLARATION
+    *************************************************************************/
 
+    /*****************************************
+     * F stage register (PC) Signals 
+     *****************************************/
     // Inputs
-    // wire [31:0] PC_IN
+    wire PC_WE ;
+    wire [31:0] PC_IN ;
     
     // Outputs
-    // wire [31:0] PC_F;
+    wire [31:0] PC_F; // ProgramCounter module already implements it as a reg
 
     /* ProgramCounter signals */
     // wire CLK ;
     // wire RESET ;
-    wire PC_WE ;    
-    wire [31:0] PC_IN ;
-    wire [31:0] PC_F; // ProgramCounter module already implements it as a reg
-
-    // Other signals in F stage
     wire [31:0] PC_Offset ;
 
-    /* D stage register */
-
+    /*****************************************
+     * D Stage Register Signals 
+     *****************************************/
     // Inputs
     wire [31:0] Instr_F;
 
@@ -118,17 +120,17 @@ module RV(
     reg [31:0] PC_D;
 
     /* Decoder signals */
-    wire [6:0] Opcode ;
     wire [2:0] Funct3_D ;
+    wire [6:0] Opcode ;
     wire [6:0] Funct7 ;
     wire [1:0] PCS_D ;
     wire RegWrite_D ;
-    wire MemWrite_D ;
     wire MemtoReg_D ;
+    wire MemWrite_D ;
+    wire [3:0] ALUControl_D ;
     wire [1:0] ALUSrcA_D ;
     wire [1:0] ALUSrcB_D ;
     // wire [2:0] ImmSrc ;
-    wire [3:0] ALUControl_D ;
     wire MCycleStart_D;
     wire MCycle_ResultSelect_D;
     wire [1:0] MCycleOp_D;
@@ -148,17 +150,18 @@ module RV(
     wire [24:0] InstrImm ;
     wire [31:0] ExtImm_D ;
     
-    /* E stage register */
-
+    /*****************************************
+     * E Stage Register Signals 
+     *****************************************/
     // Inputs
     // wire [2:0] Funct3_D;
     // wire [1:0] PCS_D;
     // wire RegWrite_D;
-    // wire MemWrite_D;
     // wire MemtoReg_D;
+    // wire MemWrite_D;
+    // wire [3:0] ALUControl_D;
     // wire [1:0] ALUSrcA_D;
     // wire [1:0] ALUSrcB_D;
-    // wire [3:0] ALUControl_D;
     // wire MCycleStart_D;
     // wire MCycle_ResultSelect_D;
     // wire [1:0] MCycleOp_D;
@@ -169,14 +172,14 @@ module RV(
     // reg [31:0] PC_D;
 
     // Outputs
-    reg [1:0] PCS_E;
     reg [2:0] Funct3_E;
+    reg [1:0] PCS_E;
     reg RegWrite_E;
     reg MemtoReg_E;
     reg MemWrite_E;
+    reg [3:0] ALUControl_E;
     reg [1:0] ALUSrcA_E;
     reg [1:0] ALUSrcB_E;
-    reg [3:0] ALUControl_E;
     reg MCycleStart_E;
     reg MCycle_ResultSelect_E;
     reg [1:0] MCycleOp_E;
@@ -202,7 +205,7 @@ module RV(
     /* MCycle signals */
     // wire CLK ;
     // wire RESET ;
-    wire MCycleStart ;
+    // wire MCycleStart_E ;
     // reg [1:0] MCycleOp_E ;
     wire [31:0] MCycle_Operand1 ;
     wire [31:0] MCycle_Operand2 ; 
@@ -210,8 +213,9 @@ module RV(
     wire [31:0] MCycle_Result2 ;
     wire Busy ;
 
-    /* M stage register */
-
+    /*****************************************
+     * M Stage Register Signals 
+     *****************************************/
     // Inputs
     // wire RegWrite_E;
     // wire MemtoReg_E;
@@ -230,16 +234,16 @@ module RV(
 
     /* Signals in M Stage */
     // v2: <Added to support lb/lbu/lh/lhu/sb/sh>
-    // reg MemtoReg_M;
+    wire [2:0] SizeSel;
     // reg MemWrite_M;
     // reg [31:0] ALUResult_M;
-    wire [31:0] ReadData_M;
     // reg [31:0] WriteData_M;
-    wire [2:0] SizeSel;
-    // v2: </Added to support lb/lbu/lh/lhu/sb/sh>
+    wire [31:0] ReadData_M;
 
-    /* W stage register */
 
+    /*****************************************
+     * W Stage Register Signals 
+     *****************************************/
     // Inputs
     // reg RegWrite_M;
     // reg MemtoReg_M;
@@ -257,31 +261,20 @@ module RV(
     // Other signals in Writeback stage
     wire [31:0] Result_W;
 
-    // TODO: other datapath connections here
 
-    /* === Fetch Stage === */
-    /* 
-     * Program counter input 
-     * PCSrc[0]:
-        * controls offset for PC+ : ExtImm(1) or 4(0)
-        * controls while pipeline stage info comes from : E(1) or F(0) 
+    /*************************************************************************
+                            END OF REGISTER DECLARATION
+    *************************************************************************/
 
-     * PCSrc[1] selects base for PC+ : RD1(1) or PC(0)
-    */
-    
-    assign PC_Offset = (PCSrc_E[0] == 1'b0) ? 4 : ExtImm_E;
+    /*************************************************************************
+                        START OF STAGE DATAPATH CONNECTION
+    *************************************************************************/
 
-    wire [31:0] PC_Base;
-    assign PC_Base =    (PCSrc_E[1] == 1'b0) ? 
-                        (PCSrc_E[0] == 1'b0) ? PC_F : PC_E
-                        : RD1_E;
-    
-    assign PC_IN = PC_Base + PC_Offset;
-    assign PC = PC_F;
-    // Will need to control it for multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
-    assign PC_WE = Busy ? 1'b1 : 1'b0;  // PC is active-low
-    
-    /* === Fetch Pipeline Register === */
+    /*****************************************
+     * Fetch Pipeline Register (or PC register)
+     *****************************************/
+    assign Instr_F = Instr; // Get instruction from Wrapper module
+
     /* Instantiate ProgramCounter */    
     ProgramCounter IProgramCounter_1 (
         .CLK(CLK),
@@ -291,10 +284,31 @@ module RV(
         .PC(PC_F)  
     );
 
-    assign Instr_F = Instr;
+    /*****************************************
+     * Fetch Stage Datapath 
+     *****************************************/
+    /* 
+     * Program counter input 
+     * PCSrc[0]:
+        * controls offset for PC+ : ExtImm(1) or 4(0)
+        * controls while pipeline stage info comes from : E(1) or F(0) 
+     * PCSrc[1] selects base for PC+ : RD1(1) or PC(0)
+    */
+    wire [31:0] PC_Base;
+    
+    assign PC_IN = PC_Offset + PC_Base;
+    assign PC_Offset = (PCSrc_E[0] == 1'b0) ? 4 : ExtImm_E;
+    assign PC_Base = (PCSrc_E[1] == 1'b0) ? 
+                     ((PCSrc_E[0] == 1'b0) ? PC_F : PC_E) // Will choose PC_E if brancgh or jump
+                     : RD1_E;
+    // PC_WE for Multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
+    assign PC_WE = Busy ? 1'b1 : 1'b0;  // PC is active-low
+    assign PC = PC_F;                   // For output to wrapper
 
-    /* === Decode Pipeline Register === */
-    always @(posedge CLK or posedge RESET) begin
+    /*****************************************
+     * Decode Pipeline Register
+     *****************************************/
+    always @(posedge CLK) begin
         if (RESET) begin
             Instr_D <= 32'h0;
             PC_D <= 32'h0;
@@ -304,15 +318,17 @@ module RV(
         end
     end
 
-    /* === Decode Stage === */
+    /*****************************************
+     * Decode Stage Datapath
+     *****************************************/
     /* Instruction from instruction memory */
+	assign Funct3_D = Instr_D[14:12];
+	assign Opcode = Instr_D[6:0];
+	assign Funct7 = Instr_D[31:25];
 	assign rs1_D = Instr_D[19:15];
 	assign rs2_D = Instr_D[24:20];
 	assign rd_D = Instr_D[11:7];
 	assign InstrImm = Instr_D[31:7];
-	assign Funct3_D = Instr_D[14:12];
-	assign Funct7 = Instr_D[31:25];
-	assign Opcode = Instr_D[6:0];
 
     /* Instantiate Decoder */
     Decoder IDecoder_1 (
@@ -351,8 +367,10 @@ module RV(
         .ExtImm(ExtImm_D)
     );
 
-    /* === Execute Pipeline Register === */
-    always @(posedge CLK or posedge RESET) begin
+    /*****************************************
+     * Execute Pipeline Register
+     *****************************************/
+    always @(posedge CLK) begin
         if (RESET) begin
             PCS_E <= 2'b00;
             Funct3_E <= 3'b000;
@@ -390,7 +408,9 @@ module RV(
         end
     end
 
-    /* === Execute Stage === */
+    /*****************************************
+     * Execute Stage Datapath
+     *****************************************/    
     /* ALU and MCycle inputs 
      * Src_A == MCycle Operand1
      * Src_B == MCycle Operand2
@@ -442,14 +462,16 @@ module RV(
      * MCycle_Result1: MCycle block (mul: LSW, div: Quotient)
      * MCycle_Result2: MCycle block (mul: MSW, div: Remainder)
     */
-    assign ALUResult_E =    MCycleStart_E ? // check if its a multi-cycle instruction
+    assign ALUResult_E = MCycleStart_E ? // check if its a multi-cycle instruction
                             (MCycle_ResultSelect_E ? MCycle_Result2 : MCycle_Result1) // select MCycle_Result based on the instruction
                             : ALUResult;
 
     assign WriteData_E = RD2_E; 
                         
-    /* === Memory Pipeline Register === */
-    always @(posedge CLK or posedge RESET) begin
+    /*****************************************
+     * Memory Pipeline Register
+     *****************************************/
+    always @(posedge CLK) begin
         if (RESET) begin
             RegWrite_M <= 1'b0;
             MemtoReg_M <= 1'b0;
@@ -467,7 +489,9 @@ module RV(
         end
     end
 
-    /* === Memory Stage === */
+    /*****************************************
+     * Memory Stage Datapath
+     *****************************************/    
     /* Data memory write data */
     assign MemRead = MemtoReg_M; // This is needed for the proper functionality of some devices such as UART CONSOLE
 
@@ -484,8 +508,10 @@ module RV(
                                          // supporting lb/sb/lbu/lh/sh/lhu/lw/sw. Hint: funct3
     // v2: </Added to support lb/lbu/lh/lhu/sb/sh>
 
-    /* === Writeback Pipeline Register === */
-    always @(posedge CLK or posedge RESET) begin
+    /*****************************************
+     * Writeback Pipeline Register
+     *****************************************/
+    always @(posedge CLK) begin
         if (RESET) begin
             RegWrite_W <= 1'b0;
             MemtoReg_W <= 1'b0;
@@ -501,8 +527,9 @@ module RV(
         end
     end
 
-    /* === Writeback Stage === */
-    /* Datapath result */
+    /*****************************************
+     * Writeback Stage Datapath
+     *****************************************/        /* Datapath result */
     assign Result_W = (MemtoReg_W == 1'b0) ? ALUResult_W : ReadData_W; // check if its a load instruction
 
     /* Register write enable */
@@ -510,5 +537,10 @@ module RV(
 
     /* Register write data */
 	assign RegFile_WD = Result_W;
+
+    
+    /*************************************************************************
+                        END OF STAGE DATAPATH CONNECTION
+    *************************************************************************/
 
 endmodule

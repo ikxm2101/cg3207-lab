@@ -46,10 +46,10 @@ module ALU (
 	wire [31:0] ShOut;
 	
     /* Other signals */
-    reg [31:0] Src_A_comp;
-    reg [31:0] Src_B_comp;
-    reg [31:0] C_0;
-    wire [31:0] S_wider;
+    reg [32:0] Src_A_comp;
+    reg [32:0] Src_B_comp;
+    reg [32:0] C_0;
+    wire [32:0] S_wider;
     wire N, Z, C, V; 	// optional intermediate values to derive eq, lt, ltu
 			            // Hint: We need to care about V only for subtraction
 	
@@ -58,11 +58,14 @@ module ALU (
     /* ALU Control signals */
     localparam ADD = 4'b0000;
     localparam SUB = 4'b0001;
-    localparam AND = 4'b1110;
+    localparam XOR = 4'b1000; // TODO: not impl
     localparam OR  = 4'b1100;
+    localparam AND = 4'b1110;
     localparam SLL = 4'b0010;
     localparam SRL = 4'b1010;
     localparam SRA = 4'b1011;
+    localparam SLT = 4'b0100; // TODO: not impl
+    localparam SLTU = 4'b0110; // TODO: not impl
 
     always @(Src_A, Src_B, ALUControl, S_wider, ShOut) begin
         // default values: help avoid latches
@@ -82,7 +85,7 @@ module ALU (
             OR: ALUResult = Src_A | Src_B; 
             SLL: ALUResult = ShOut;
             SRL: ALUResult = ShOut;
-            SRA: ALUResult = ShOut;						
+            SRA: ALUResult = ShOut;	
             default: ALUResult = 32'bx;
         endcase
     end
