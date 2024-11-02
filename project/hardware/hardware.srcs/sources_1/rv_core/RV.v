@@ -312,7 +312,11 @@ module RV(
         if (RESET) begin
             Instr_D <= 32'h0;
             PC_D <= 32'h0;
-        end else begin
+        end else if (Busy) begin
+            Instr_D <= Instr_D;
+            PC_D <= PC_D;
+        end
+        else begin
             Instr_D <= Instr_F;
             PC_D <= PC_F;
         end
@@ -388,6 +392,23 @@ module RV(
             ExtImm_E <= 32'h0;
             rd_E <= 5'h0;
             PC_E <= 32'h0;
+        end else if (Busy) begin
+            PCS_E <= PCS_E;
+            Funct3_E <= Funct3_E;
+            RegWrite_E <= RegWrite_E;
+            MemtoReg_E <= MemtoReg_E;
+            MemWrite_E <= MemWrite_E;
+            ALUSrcA_E <= ALUSrcA_E;
+            ALUSrcB_E <= ALUSrcB_E;
+            ALUControl_E <= ALUControl_E;
+            MCycleStart_E <= MCycleStart_E ;
+            MCycle_ResultSelect_E <= MCycle_ResultSelect_E;
+            MCycleOp_E <= MCycleOp_E;
+            RD1_E <= RD1_E;
+            RD2_E <= RD2_E;
+            ExtImm_E <= ExtImm_E;
+            rd_E <= rd_E;
+            PC_E <= PC_E;
         end else begin
             PCS_E <= PCS_D;
             Funct3_E <= Funct3_D;
@@ -479,6 +500,13 @@ module RV(
             ALUResult_M <= 32'h0;
             WriteData_M <= 32'h0;
             rd_M <= 5'h0;
+        end else if (Busy) begin
+            RegWrite_M <= RegWrite_M;
+            MemtoReg_M <= MemtoReg_M ;
+            MemWrite_M <= MemWrite_M;
+            ALUResult_M <= ALUResult_M;
+            WriteData_M <= WriteData_M;
+            rd_M <= rd_M;
         end else begin
             RegWrite_M <= RegWrite_E;
             MemtoReg_M <= MemtoReg_E;
@@ -518,6 +546,12 @@ module RV(
             ReadData_W <= 32'h0;
             ALUResult_W <= 32'h0;
             rd_W <= 5'h0;
+        end else if (Busy) begin
+            RegWrite_W <= RegWrite_W;
+            MemtoReg_W <= MemtoReg_W;
+            ReadData_W <= ReadData_W;
+            ALUResult_W <= ALUResult_W;
+            rd_W <= rd_W;
         end else begin
             RegWrite_W <= RegWrite_M;
             MemtoReg_W <= MemtoReg_M;
