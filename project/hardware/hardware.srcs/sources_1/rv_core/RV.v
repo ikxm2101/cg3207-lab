@@ -308,7 +308,7 @@ module RV(
     /*****************************************
      * Decode Pipeline Register
      *****************************************/
-    always @(posedge CLK or posedge RESET) begin
+    always @(posedge CLK) begin
         if (RESET) begin
             Instr_D <= 32'h0;
             PC_D <= 32'h0;
@@ -370,7 +370,7 @@ module RV(
     /*****************************************
      * Execute Pipeline Register
      *****************************************/
-    always @(posedge CLK or posedge RESET) begin
+    always @(posedge CLK) begin
         if (RESET) begin
             PCS_E <= 2'b00;
             Funct3_E <= 3'b000;
@@ -471,7 +471,7 @@ module RV(
     /*****************************************
      * Memory Pipeline Register
      *****************************************/
-    always @(posedge CLK or posedge RESET) begin
+    always @(posedge CLK) begin
         if (RESET) begin
             RegWrite_M <= 1'b0;
             MemtoReg_M <= 1'b0;
@@ -508,12 +508,10 @@ module RV(
                                          // supporting lb/sb/lbu/lh/sh/lhu/lw/sw. Hint: funct3
     // v2: </Added to support lb/lbu/lh/lhu/sb/sh>
 
-<<<<<<< HEAD
-
     /*****************************************
      * Writeback Pipeline Register
      *****************************************/
-    always @(posedge CLK or posedge RESET) begin
+    always @(posedge CLK) begin
         if (RESET) begin
             RegWrite_W <= 1'b0;
             MemtoReg_W <= 1'b0;
