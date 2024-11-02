@@ -17,8 +17,8 @@
 .text	## IROM segment 0x00000000-0x000001FC
 # Total number of instructions should not exceed 128 (127 excluding the last line 'halt B halt').
 
-init:
     la s1, SEVENSEG
+init: 
     addi t0, x0, 96
     addi t1, x0, 10
     nop
