@@ -63,7 +63,7 @@ module test_Hazard #(
 	);
 
     // Expected pattern array
-    reg [31:0] expected_pattern [0:10]; // Adjust the size as needed for your test
+    reg [31:0] expected_pattern [0:11]; // Adjust the size as needed for your test
     integer i;
 
     /* Clock generation */      
@@ -82,8 +82,9 @@ module test_Hazard #(
         expected_pattern[6] = 32'd5;
         expected_pattern[7] = 32'd103;
         expected_pattern[8] = 32'd22;
-        expected_pattern[9] = 32'd15;
-        expected_pattern[10] = 32'd0;
+        expected_pattern[9] = 32'd345;
+        expected_pattern[10] = 32'd355;
+        expected_pattern[11] = 32'd0;
 
 
 
@@ -93,7 +94,7 @@ module test_Hazard #(
         i = 0; // Start with the first pattern
         $monitor("Time= %t, SEVENSEGHEX: %h", $time, SEVENSEGHEX);
 
-        while (i < 11) begin
+        while (i < 12) begin
             @(SEVENSEGHEX); // Wait for SEVENSEGHEX to change
             if (SEVENSEGHEX !== expected_pattern[i]) begin
                 $display("Error at time %t: Expected %d, got %d", $time, expected_pattern[i], SEVENSEGHEX);

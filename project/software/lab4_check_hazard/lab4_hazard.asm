@@ -51,6 +51,10 @@ display_b:
     sw s8, (s1)     
     sw t2, (s1)
     sw s3, (s1)
+    
+test_mul:
+    mul s8, s7, s8 # 345
+    sw s8, (s1)
 
 test_hazard_control:
     bne s3, s8, control_ok
@@ -59,9 +63,8 @@ test_hazard_control:
     or s9, t2, s3
 
 control_ok:
-    addi s8, s8, 10 # 15
+    addi s8, s8, 10 # 355
     sw s8, (s1) 
-
 
 final:
     jal init
