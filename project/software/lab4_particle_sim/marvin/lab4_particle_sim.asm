@@ -4,31 +4,22 @@ main:
         addi    sp, sp, -96
         addi    a0, sp, 12
         call    init_particles
-        li      s0, 0
-        lui     s1, 2
+        li      s0, 1
+        lui     s2, 2
 .LBB0_1:
-        lw      s2, 1052(s1)
+        lw      s3, 1052(s2)
         addi    a0, sp, 12
         call    update_particles
-        lw      s3, 1052(s1)
+        lw      s1, 1052(s2)
         addi    a0, sp, 12
         call    draw_particles
-        addi    s0, s0, 1
         andi    a0, s0, 15
-        sw      s0, 1048(s1)
-        bnez    a0, .LBB0_1
-        sub     a0, s3, s2
-        li      a2, 24
+        sw      s0, 1048(s2)
+        bnez    a0, .LBB0_3
+        sub     a0, s1, s3
+        call    output_performance
 .LBB0_3:
-        mv      a1, a2
-.LBB0_4:
-        lw      a2, 1044(s1)
-        beqz    a2, .LBB0_4
-        srl     a2, a0, a1
-        andi    a2, a2, 255
-        sw      a2, 1036(s1)
-        addi    a2, a1, -8
-        bnez    a1, .LBB0_3
+        addi    s0, s0, 1
         j       .LBB0_1
 
 init_particles:
@@ -180,20 +171,59 @@ draw_particles:
         ret
 
 output_performance:
-        li      a3, 24
-        lui     a1, 2
-.LBB4_1:
-        mv      a2, a3
+        addi    sp, sp, -16
+        li      a5, 0
+        beqz    a0, .LBB4_4
+        lui     a1, 838861
+        addi    a1, a1, -819
+        li      a6, 10
+        addi    a7, sp, 4
+        li      t0, 9
 .LBB4_2:
-        lw      a3, 1044(a1)
-        beqz    a3, .LBB4_2
-        srl     a3, a0, a2
-        andi    a3, a3, 255
-        sw      a3, 1036(a1)
-        addi    a3, a2, -8
-        bnez    a2, .LBB4_1
+        mv      a2, a0
+        mulhu   a0, a0, a1
+        srli    a0, a0, 3
+        mul     a3, a0, a6
+        sub     a3, a2, a3
+        ori     a3, a3, 48
+        add     a4, a7, a5
+        addi    a5, a5, 1
+        sb      a3, 0(a4)
+        bltu    t0, a2, .LBB4_2
+        addi    a5, a5, -1
+        j       .LBB4_5
+.LBB4_4:
+        li      a0, 48
+        sb      a0, 4(sp)
+.LBB4_5:
+        lui     a0, 2
+        addi    a1, sp, 4
+.LBB4_6:
+        mv      a2, a5
+.LBB4_7:
+        lw      a3, 1044(a0)
+        beqz    a3, .LBB4_7
+        add     a3, a1, a2
+        lbu     a3, 0(a3)
+        sw      a3, 1036(a0)
+        addi    a5, a2, -1
+        bgtz    a2, .LBB4_6
+        lui     a0, 2
+.LBB4_10:
+        lw      a1, 1044(a0)
+        beqz    a1, .LBB4_10
+        lui     a0, 2
+        li      a1, 13
+        sw      a1, 1036(a0)
+.LBB4_12:
+        lw      a1, 1044(a0)
+        beqz    a1, .LBB4_12
+        lui     a0, 2
+        li      a1, 10
+        sw      a1, 1036(a0)
+        addi    sp, sp, 16
         ret
-        
-.data
+
+.data 
 CYCLECOUNT_ADDR:
         .word   9244

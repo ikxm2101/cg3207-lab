@@ -39,7 +39,7 @@ typedef struct
 
 
 void init_particles(Particle particles[NUM_PARTICLES]);
-void output_performance(unsigned int cycles);
+void output_performance(unsigned int value);
 void update_particles(Particle particles[NUM_PARTICLES]);
 void draw_particles(Particle particles[NUM_PARTICLES]);
 volatile unsigned int *const CYCLECOUNT_ADDR = (unsigned int *)(MMIO_BASE + CYCLECOUNT_OFF);
@@ -103,18 +103,38 @@ void init_particles(Particle particles[NUM_PARTICLES])
 /* Output performance metrics via UART
  * Shows the impact of pipeline optimizations through cycle counts
  */
-void output_performance(unsigned int cycles)
+void output_performance(unsigned int value)
 {
     volatile unsigned int *const UART_ADDR = (unsigned int *)(MMIO_BASE + UART_OFF);
     volatile unsigned int *const UART_TX_READY_ADDR = (unsigned int *)(MMIO_BASE + UART_RX_READY_OFF);
 
-    // Output cycle count byte by byte
-    for (int i = 24; i >= 0; i -= 8)
+    char buffer[12];
+    int index = 0;
+
+    if (value == 0) 
     {
-        while (!(*UART_TX_READY_ADDR))
-            ; // Wait for UART ready
-        *UART_ADDR = (cycles >> i) & 0xFF;
+        buffer[index++] = '0';
+    } 
+    else
+    {
+        while (value > 0)
+        {
+            buffer[index++] = (value % 10) + '0';
+            value = value / 10;
+        }
     }
+
+    for (int i = index - 1; i >= 0; i--)
+    {
+        while (!(*UART_TX_READY_ADDR));
+        *UART_ADDR = buffer[i];
+    }
+
+    while (!(*UART_TX_READY_ADDR));
+    *UART_ADDR = '\r';
+
+    while (!(*UART_TX_READY_ADDR));
+    *UART_ADDR = '\n';
 }
 
 /* Main particle update function - demonstrates both hazard resolution and branch prediction
