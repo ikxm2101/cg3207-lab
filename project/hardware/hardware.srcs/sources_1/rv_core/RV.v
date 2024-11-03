@@ -322,7 +322,7 @@ module RV(
     assign PC_Offset = (PCSrc_E[0] == 1'b0) ? 4 : ExtImm_E;
     assign PC_Base = (PCSrc_E[1] == 1'b0) ? 
                      ((PCSrc_E[0] == 1'b0) ? PC_F : PC_E) // Will choose PC_E if brancgh or jump
-                     : RD1_E;
+                     : RD1_E_Choose;
     // PC_WE for Multi-cycle operations (Multiplication, Division) and/or Pipelining with hazard hardware.
     assign PC_WE = (MCycle_Busy || StallF) ? 1'b1 : 1'b0;  // PC is active-low
     assign PC = PC_F;                   // For output to wrapper

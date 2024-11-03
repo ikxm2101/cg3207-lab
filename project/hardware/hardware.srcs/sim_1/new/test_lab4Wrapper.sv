@@ -70,7 +70,8 @@ module test_lab4Wrapper #(
 	/* Testbench stimuli */
     initial begin
 		repeat(2) @(posedge CLK); RESET = 0;
-
+		
+        $monitor("Time= %t, SEVENSEGHEX: %h", $time, SEVENSEGHEX);
 		$monitor("Time= %t, OLED_Write: %d", $time, OLED_Write);
 		$monitor("Time= %t, OLED_Col: %d", $time, OLED_Col);
 		$monitor("Time= %t, OLED_Row: %d", $time, OLED_Row);
