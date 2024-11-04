@@ -28,7 +28,6 @@
 /* Particle structure creates opportunities for pipeline optimization:
  * - Multiple fields create load-use hazards when accessing struct members
  * - Updates to position/velocity show benefits of data forwarding
- * - Array of particles creates regular memory access patterns for branch prediction
  */
 typedef struct
 {
@@ -103,7 +102,7 @@ void init_particles(Particle particles[NUM_PARTICLES])
 }
 
 
-/* Main particle update function - demonstrates both hazard resolution and branch prediction
+/* Main particle update function - demonstrates hazard resolution
  * This function contains the most intensive computation and shows the biggest
  * benefits from pipeline optimizations
  */
@@ -118,17 +117,11 @@ void update_particles(Particle particles[NUM_PARTICLES])
          * 3. Store result back
          *
          * Without forwarding: ~3 cycles per update (load → add → store)
-         * With forwarding: ~1-2 cycles (forwarding from ALU/MEM stage)
+         * With forwarding: ~1 cycles (forwarding from ALU/MEM stage)
          */
         particles[i].x += particles[i].dx; // RAW hazard
         particles[i].y += particles[i].dy; // RAW hazard
 
-        /* Boundary Checking Section
-         * Demonstrates branch prediction benefits:
-         * - Regular pattern of branches (particles bounce predictably)
-         * - Branch predictor can learn screen boundary patterns
-         * - Multiple branches in sequence test predictor capability
-         */
         if ((particles[i].x ) >= SCREEN_WIDTH)
         {
             particles[i].x = (SCREEN_WIDTH - 1) ;
@@ -190,9 +183,7 @@ void update_particles(Particle particles[NUM_PARTICLES])
 }
 
 /* Drawing function - even display code benefits from optimizations:
- * - Regular nested loops benefit from branch prediction
  * - Coordinate calculations show data forwarding benefits
- * - Screen boundary checks create predictable branch patterns
  */
 void draw_particles(Particle particles[NUM_PARTICLES])
 {
